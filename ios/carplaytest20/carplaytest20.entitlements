@@ -14,5 +14,7 @@
     <true/>
     <key>com.apple.developer.carplay-quick-ordering</key>
     <true/>
+    <key>com.apple.developer.carplay-maps</key>
+    <true/>
 </dict>
 </plist>

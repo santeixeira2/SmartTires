@@ -2124,6 +2124,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-community/geolocation@npm:^3.4.0":
+  version: 3.4.0
+  resolution: "@react-native-community/geolocation@npm:3.4.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 4a1a334de5b8345ee5ca9af987718a4cdd0b401b6d024268330c98736eccd0bebf45fd1d4cb396558f429a4670e5b29da0b5b7ebd4e51ca12972d4b08b55d4bc
+  languageName: node
+  linkType: hard
+
 "@react-native/assets-registry@npm:0.80.2":
   version: 0.80.2
   resolution: "@react-native/assets-registry@npm:0.80.2"
@@ -2459,6 +2469,13 @@ __metadata:
   dependencies:
     "@babel/types": ^7.20.7
   checksum: 2a2e5ad29c34a8b776162b0fe81c9ccb6459b2b46bf230f756ba0276a0258fcae1cbcfdccbb93a1e8b1df44f4939784ee8a1a269f95afe0c78b24b9cb6d50dd1
+  languageName: node
+  linkType: hard
+
+"@types/geojson@npm:^7946.0.13":
+  version: 7946.0.16
+  resolution: "@types/geojson@npm:7946.0.16"
+  checksum: d66e5e023f43b3e7121448117af1930af7d06410a32a585a8bc9c6bb5d97e0d656cd93d99e31fa432976c32e98d4b780f82bf1fd1acd20ccf952eb6b8e39edf2
   languageName: node
   linkType: hard
 
@@ -3454,6 +3471,7 @@ __metadata:
     "@react-native-community/cli": 19.1.1
     "@react-native-community/cli-platform-android": 19.1.1
     "@react-native-community/cli-platform-ios": 19.1.1
+    "@react-native-community/geolocation": ^3.4.0
     "@react-native/babel-preset": 0.80.2
     "@react-native/eslint-config": 0.80.2
     "@react-native/metro-config": 0.80.2
@@ -3468,6 +3486,7 @@ __metadata:
     react: 19.1.0
     react-native: 0.80.2
     react-native-carplay: ^2.4.1-beta.0
+    react-native-maps: ^1.24.13
     react-native-uuid: ^2.0.3
     react-test-renderer: 19.1.0
     typescript: 5.0.4
@@ -7620,6 +7639,22 @@ __metadata:
     react-native:
       optional: true
   checksum: f5c6689f12c4178fc9830a2fb47377d41d038e2b3b4290c747ec27230ce48e50c61fd2a32bc660667418146de77212354bc9caca8023ef5e96e6a7e9d4311193
+  languageName: node
+  linkType: hard
+
+"react-native-maps@npm:^1.24.13":
+  version: 1.24.13
+  resolution: "react-native-maps@npm:1.24.13"
+  dependencies:
+    "@types/geojson": ^7946.0.13
+  peerDependencies:
+    react: ">= 18.3.1"
+    react-native: ">= 0.76.0"
+    react-native-web: ">= 0.11"
+  peerDependenciesMeta:
+    react-native-web:
+      optional: true
+  checksum: 42485fc0170c314254140f50e750a3db10d0ad18aa3f6e84977469907a647bdca6ae96d7b0e395499d049defb491d09c60f2d7eb220d2af002dc6938b1a08e18
   languageName: node
   linkType: hard
 
