@@ -1679,9 +1679,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-maps (1.24.13):
-    - react-native-maps/Maps (= 1.24.13)
-  - react-native-maps/Generated (1.24.13):
+  - react-native-maps (1.26.14):
+    - react-native-maps/Maps (= 1.26.14)
+  - react-native-maps/Generated (1.26.14):
     - boost
     - DoubleConversion
     - fast_float
@@ -1710,7 +1710,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-maps/Maps (1.24.13):
+  - react-native-maps/Maps (1.26.14):
     - boost
     - DoubleConversion
     - fast_float
@@ -2496,7 +2496,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: 8ff9cb220a8efa625b5885996bd69e69db9edf02
   react-native-carplay: 8f388f6f73e5e0f73ed154ad8794371343ee20c0
   react-native-geolocation: f01ad4718ad1d015d0c0dd12a6f707354022530e
-  react-native-maps: 1ab2b2317dfb1337f5e675c07d6c423bebff1285
+  react-native-maps: 53d8d1e4c4ec3bd495d89090d54312929e6bcb7c
   React-NativeModulesApple: 37c08c3c54db55854de816b0df0f3683832be35a
   React-oscompat: 56d6de59f9ae95cd006a1c40be2cde83bc06a4e1
   React-perflogger: 4008bd05a8b6c157b06608c0ea0b8bd5d9c5e6c9
@@ -2533,4 +2533,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 8e90c09ffba3ca2148a9c2dcbab8a4e595821e95
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.15.2
