@@ -32,7 +32,7 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
 
   // Use Ford Ranger image for all vehicle types
   const getVehicleImage = () => {
-    return require('../../../assets/images/map.png');
+    return require('../../../assets/images/ford-ranger.png');
   };
 
   // Original overlay color calculation
