@@ -3,7 +3,7 @@ export interface User {
     id: string;
     email: string;
     name: string;
-    role: 'driver' | 'fleet_manager' | 'admin';
+    role: 'user' | 'admin';
     companyId?: string;
     vehicleId?: string;
     lastLogin: Date;
@@ -35,7 +35,7 @@ export interface User {
     password: string;
     confirmPassword: string;
     name: string;
-    role: 'driver' | 'fleet_manager';
+    role: 'power_unit' | 'multiple_units';
     companyId?: string;
     vehicleId?: string;
     vehicleType?: string;

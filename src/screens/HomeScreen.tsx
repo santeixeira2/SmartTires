@@ -1,27 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { View, Text, StyleSheet, ScrollView, Image } from "react-native";
 import Svg, { Rect, Text as SvgText } from "react-native-svg";
-import Header from "../components/Common/Header/Header";
-import TruckTopDownView from "../components/Common/Vehicle/TruckTopDownView";
+import Header from "../components/Common/Header";
+import TruckTopDownView from "../components/Vehicle/TruckTopDownView";
 
-type TireData = {
-  psi: number;
-  temp: number;
-};
-
-type Props = {
-  frontLeft: TireData;
-  frontRight: TireData;
-  rearLeft: TireData;
-  rearRight: TireData;
-};
-
-const HomeScreen = () => {
+const HomeScreen: React.FC<HomeScreenProps> = ({ frontLeft, frontRight, rearLeft, rearRight }) => {
   const tireData = {
-    frontLeft: { psi: 32, temp: 85 },
-    frontRight: { psi: 33, temp: 78 },
-    rearLeft: { psi: 29, temp: 68 },
-    rearRight: { psi: 21, temp: 87 },
+    frontLeft: { psi: frontLeft.psi, temp: frontLeft.temp },
+    frontRight: { psi: frontRight.psi, temp: frontRight.temp },
+    rearLeft: { psi: rearLeft.psi, temp: rearLeft.temp },
+    rearRight: { psi: rearRight.psi, temp: rearRight.temp },
   };
 
   return (

@@ -1,7 +1,12 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { BadgeProps } from '../../types';
 import styles from './styles';
+
+interface BadgeProps {
+    text: string;
+    isConnected: boolean;
+    style?: any;
+}
 
 const Badge: React.FC<BadgeProps> = ({ text, isConnected, style }) => {
     return (

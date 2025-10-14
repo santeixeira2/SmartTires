@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TextInputProps, TouchableOpacity } from 'react-native';
-import { Ionicons } from 'react-native-vector-icons';
+import Ionicons  from 'react-native-vector-icons/Ionicons';
 import textBoxStyles from './textBoxStyles';
 
 interface TextBoxProps extends Omit<TextInputProps, "value" | "onChangeText" | "placeholder"> {
@@ -8,7 +8,7 @@ interface TextBoxProps extends Omit<TextInputProps, "value" | "onChangeText" | "
     placeholder: string;
     value: string;
     onChangeText: (text: string) => void;
-    icon?: keyof typeof Ionicons.glyphMap;
+    icon?: string;
     secure?: boolean;
     editable?: boolean;
 }

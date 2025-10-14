@@ -8,10 +8,10 @@ import {
     Platform,
     ScrollView,
 } from 'react-native';
-import { Ionicons } from 'react-native-vector-icons';
-import loginStyles from './loginStyles';
-import TextBox from '../../Common/TextBox';
-import { LoginFormProps } from '../../types';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import styles from './LoginForm.style';
+import TextBox from '../../components/Common/TextBox';
+import { LoginFormProps } from './LoginForm.types';
 
 const LoginForm: React.FC<LoginFormProps> = ({
     onSubmit,
@@ -29,23 +29,22 @@ const LoginForm: React.FC<LoginFormProps> = ({
             Alert.alert('Error', 'Please enter your email and password');
             return;
         }
-        onSubmit(email.trim(), password, rememberMe);
+        onSubmit({ email: email.trim(), password: password, rememberMe: rememberMe });
     }
 
     return (
         <KeyboardAvoidingView
-            style={loginStyles.container}
+            style={styles.container}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-            <ScrollView contentContainerStyle={loginStyles.scrollContent}>
-                <View style={loginStyles.header}>
-                    <Text style={loginStyles.title}>TST Smart Tire</Text>
-                    <Text style={loginStyles.subtitle}>Professional Tire Monitoring System</Text>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                <View style={styles.header}>
+                    <Text style={styles.title}>TST Smart Tire</Text>
+                    <Text style={styles.subtitle}>Professional Tire Monitoring System</Text>
                 </View>
 
-                <View style={loginStyles.formContainer}>
+                <View style={styles.formContainer}>
                     <TextBox
-                        label="Email"
                         placeholder="Enter your email"
                         value={email}
                         onChangeText={setEmail}
@@ -62,50 +61,50 @@ const LoginForm: React.FC<LoginFormProps> = ({
                     />
 
                     {error && (
-                        <View style={loginStyles.errorContainer}>
+                        <View style={styles.errorContainer}>
                             <Ionicons name="alert-circle-outline" size={16} color="#dc3545" />
-                            <Text style={loginStyles.errorText}>{error}</Text>
+                            <Text style={styles.errorText}>{error}</Text>
                         </View>
                     )}
 
                     <TouchableOpacity
-                        style={loginStyles.rememberMeContainer}
+                        style={styles.rememberMeContainer}
                         onPress={() => setRememberMe(!rememberMe)}
                         disabled={isLoading}
                     >
-                        <View style={[loginStyles.checkbox, rememberMe && loginStyles.checkboxChecked]}>
+                        <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
                             {rememberMe && <Ionicons name="checkmark-outline" size={16} color="#fff" />}
                         </View>
-                        <Text style={loginStyles.rememberMeText}>Remember me</Text>
+                        <Text style={styles.rememberMeText}>Remember me</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={[loginStyles.loginButton, isLoading && loginStyles.loginButtonDisabled]}
+                        style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
                         onPress={handleSubmit}
                         disabled={isLoading}
                     >
                         {isLoading ? (
-                        <View style={loginStyles.loadingContainer}>
-                            <Ionicons name="reload" size={20} color="#fff" style={loginStyles.spinning} />
-                            <Text style={loginStyles.loginButtonText}>Signing In...</Text>
+                        <View style={styles.loadingContainer}>
+                            <Ionicons name="reload" size={20} color="#fff" style={styles.spinning} />
+                            <Text style={styles.loginButtonText}>Signing In...</Text>
                         </View>
                         ) : (
-                        <Text style={loginStyles.loginButtonText}>Sign In</Text>
+                        <Text style={styles.loginButtonText}>Sign In</Text>
                         )}
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={loginStyles.forgotPasswordContainer}
+                        style={styles.forgotPasswordContainer}
                         onPress={onForgotPassword}
                         disabled={isLoading}
                     >
-                        <Text style={loginStyles.forgotPasswordText}>Forgot Password?</Text>
+                        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                     </TouchableOpacity>
                 </View>
-                <View style={loginStyles.registerContainer}>
-                    <Text style={loginStyles.registerText}>Don't have an account? </Text>
+                <View style={styles.registerContainer}>
+                    <Text style={styles.registerText}>Don't have an account? </Text>
                     <TouchableOpacity onPress={onRegister} disabled={isLoading}>
-                        <Text style={loginStyles.registerLink}>Sign Up</Text>
+                        <Text style={styles.registerLink}>Sign Up</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>

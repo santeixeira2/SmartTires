@@ -14,6 +14,12 @@ interface RegisterScreenProps {
 }
 
 interface ForgotPasswordScreenProps {
-    onResetPasswordSuccess: () => void;
     onBackToLogin: () => void;
+}
+
+interface HomeScreenProps {
+  frontLeft: TireData;
+  frontRight: TireData;
+  rearLeft: TireData;
+  rearRight: TireData;
 }

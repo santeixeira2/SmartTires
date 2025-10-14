@@ -1,7 +1,9 @@
 import React, { useCallback } from 'react';
 import { Alert } from 'react-native';
-import { useAuth } from '../hooks/useAuth';
-import LoginForm from '../components/Auth/LoginForm';
+import { useAuth } from '../../hooks/useAuth';
+import LoginForm from './index';
+import { LoginContainerProps, LoginData } from './LoginForm.types';
+
 
 const LoginContainer: React.FC<LoginContainerProps> = ({
     onLoginSuccess,
@@ -11,9 +13,9 @@ const LoginContainer: React.FC<LoginContainerProps> = ({
     const { login, isLoading, error, clearError } = useAuth();
 
     const handleLogin = useCallback(
-        async (email: string, password: string, rememberMe: boolean) => {
+        async (data: LoginData) => {
             try {
-                await login({ email, password, rememberMe });
+                await login(data as LoginData);
                 onLoginSuccess();
             } catch (error) {
                 Alert.alert('Error', error instanceof Error ? error.message : 'Login failed');

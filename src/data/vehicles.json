@@ -1,0 +1,35 @@
+[
+    {
+      "id": "1",
+      "name": "Ford Ranger",
+      "towingType": "towing",
+      "axleType": "2 Axle",
+      "connectionStatus": "connected",
+      "imageUrl": "Ford-Ranger-Raptor-Transparent-Free-PNG.png"
+    },
+    {
+      "id": "2",
+      "name": "Travel Trailer",
+      "towingType": "towable",
+      "axleType": "3 Axle",
+      "connectionStatus": "disconnected",
+      "imageUrl": "vtt.png"
+    },
+    {
+      "id": "3",
+      "name": "Ford F-150",
+      "towingType": "towing",
+      "axleType": "2 Axle",
+      "connectionStatus": "connected",
+      "imageUrl": "Ford-Ranger-Raptor-Transparent-Free-PNG.png"
+    },
+    {
+      "id": "4",
+      "name": "Fifth Wheel",
+      "towingType": "towable",
+      "axleType": "4 Axle",
+      "connectionStatus": "connected",
+      "imageUrl": "Ford-Ranger-Raptor-Transparent-Free-PNG.png"
+    }
+  ]
+  

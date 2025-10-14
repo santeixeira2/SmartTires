@@ -1,6 +1,6 @@
 import React from 'react';
 import { SafeAreaView, StatusBar } from 'react-native';
-import LoginContainer from '../../containers/LoginContainer';
+import LoginContainer from '../containers/LoginForm/LoginContainer';
 
 const LoginScreen: React.FC<LoginScreenProps> = (
     { onLoginSuccess, onNavigateToRegister, onNavigateToForgotPassword }

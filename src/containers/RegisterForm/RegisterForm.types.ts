@@ -1,14 +1,22 @@
-import React from 'react';
-
-interface LoginFormProps {
-    onSubmit: (email: string, password: string, rememberMe: boolean) => void;
-    isLoading: boolean;
-    error: string | null;
-    onForgotPassword: () => void;
-    onRegister: () => void;
+export interface RegisterData {
+    email: string;
+    password: string;
+    confirmPassword: string;
+    name: string;
+    role: 'user' | 'admin';
+    companyId?: string;
+    vehicleId?: string;
+    vehicleType?: string;
+    vehicleTireCount?: number;
+    trailers?: Array<{ id: string; tireCount: number }>;
 }
 
-interface RegisterFormMultiStepProps {
+export interface RegisterContainerProps {
+    onRegisterSuccess: () => void;
+    onBackToLogin: () => void;
+}
+
+export interface RegisterFormProps {
     onSubmit: (data: {
       email: string;
       password: string;
@@ -26,7 +34,7 @@ interface RegisterFormMultiStepProps {
     onBackToLogin: () => void;
   }
   
-interface RegisterLayoutProps {
+export interface RegisterLayoutProps {
     children: React.ReactNode;
     onBack: () => void;
     title: string;
@@ -42,7 +50,7 @@ interface RegisterLayoutProps {
     isLoading?: boolean;
   }
 
-interface RegisterSetupProps {
+export interface RegisterSetupProps {
     onComplete: (data: {
         role: "power_unit" | "multiple_units";
         vehicleName?: string;
@@ -74,7 +82,7 @@ interface RegisterSetupProps {
     } | null;
 }
   
-interface RegisterSummaryProps {
+export interface RegisterSummaryProps {
     onNext: () => void;
     onBack: () => void;
     isLoading: boolean;
@@ -94,7 +102,7 @@ interface RegisterSummaryProps {
     };
 }
 
-interface RegisterSyncSensorProps {
+export interface RegisterSyncSensorProps {
     onComplete: () => void;
     onBack: () => void;
     isLoading: boolean;
@@ -114,7 +122,7 @@ interface RegisterSyncSensorProps {
     };
   }
 
-interface RegisterUserProps {
+export interface RegisterUserProps {
     onNext: (data: {
       name: string;
       email: string;
@@ -126,8 +134,34 @@ interface RegisterUserProps {
     onBackToLogin: () => void;
   }
 
-interface BadgeProps {
-  text: string;
-  isConnected: boolean;
-  style?: any;
+export interface RegisterSetupProps {
+  onComplete: (data: {
+    role: "power_unit" | "multiple_units";
+    vehicleName?: string;
+    towingType?: string;
+    axleTowingType?: string;
+    towables?: Array<{
+      id: string;
+      name: string;
+      type: string;
+      axle: string;
+      tireCount: number;
+    }>;
+  }) => void;
+  onBack: () => void;
+  isLoading: boolean;
+  error: string | null;
+  initialData?: {
+    role: "power_unit" | "multiple_units";
+    vehicleName?: string;
+    towingType?: string;
+    axleTowingType?: string;
+    towables?: Array<{
+      id: string;
+      name: string;
+      type: string;
+      axle: string;
+      tireCount: number;
+    }>;
+  } | null;
 }
