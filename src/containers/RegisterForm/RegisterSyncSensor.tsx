@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, StyleSheet, TextInput } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import RegisterLayout from './RegisterLayout';
 import VehicleList, { Vehicle } from '../../components/Vehicle/VehicleList';
@@ -82,11 +82,18 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
     Alert.alert("QR Code Scanned", `Sensor ID: ${data}`);
   };
 
+  const handleMockQRScan = () => {
+    // Generate a mock sensor ID
+    const mockSensorId = `SENSOR-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+    setSensorId(mockSensorId);
+    setShowQRScanner(false);
+    setShowManualSyncModal(true);
+    Alert.alert("QR Code Scanned", `Sensor ID: ${mockSensorId}`);
+  };
+
   const openQRScanner = async () => {
     console.log("Opening QR Scanner");
-    Alert.alert("Debug", "QR Scanner button pressed!");
     setShowQRScanner(true);
-    console.log("QR Scanner state set to true");
   };
 
   const renderSyncContent = () => (
@@ -133,33 +140,67 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
 
   const renderManualSyncContent = () => (
     <View style={styles.manualSyncContainer}>
-      <Ionicons name="bluetooth-outline" size={48} color="#007bff" />
+      <Ionicons name="keypad-outline" size={48} color="#007bff" />
       <Text style={styles.manualSyncTitle}>Enter Sensor ID</Text>
       <Text style={styles.manualSyncDescription}>
         Enter the Sensor ID to manually sync with your vehicle
       </Text>
       
-      <TextBox
-        placeholder="Enter Sensor ID"
-        value={sensorId}
-        onChangeText={setSensorId}
-        icon="bluetooth"
-        style={styles.sensorIdInput}
-      />
+      <View style={styles.sensorIdContainer}>
+        <TextInput
+          style={styles.sensorIdInput}
+          placeholder="Enter Sensor ID (e.g., SENSOR-ABC123)"
+          value={sensorId}
+          onChangeText={setSensorId}
+          autoCapitalize="characters"
+          autoCorrect={false}
+          placeholderTextColor="#6c757d"
+        />
+        <Ionicons name="bluetooth" size={20} color="#007bff" style={styles.sensorIdIcon} />
+      </View>
+      
+      {sensorId && (
+        <View style={styles.sensorIdPreview}>
+          <Text style={styles.sensorIdPreviewLabel}>Sensor ID:</Text>
+          <Text style={styles.sensorIdPreviewValue}>{sensorId}</Text>
+        </View>
+      )}
     </View>
   );
+
+  const handleSensorSync = () => {
+    if (sensorId.trim()) {
+      console.log("Syncing sensor with ID:", sensorId);
+      Alert.alert(
+        "Sensor Synced",
+        `Successfully synced sensor: ${sensorId}`,
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              setShowManualSyncModal(false);
+              setSensorId("");
+              setShowSyncModal(false);
+              setSelectedVehicle(null);
+              // You can add logic here to mark this vehicle as synced
+            }
+          }
+        ]
+      );
+    } else {
+      Alert.alert("Error", "Please enter a valid Sensor ID");
+    }
+  };
 
   const renderModalFooter = (isManualSync = false) => (
     <View style={styles.modalFooter}>
       <TouchableOpacity
-        style={styles.syncButton}
-        onPress={isManualSync ? () => {
-          if (sensorId.trim()) {
-            console.log("Manual sync with Sensor ID:", sensorId);
-            setShowManualSyncModal(false);
-            setSensorId("");
-          }
-        } : handleSyncComplete}
+        style={[
+          styles.syncButton,
+          isManualSync && !sensorId.trim() && styles.syncButtonDisabled
+        ]}
+        onPress={isManualSync ? handleSensorSync : handleSyncComplete}
+        disabled={isManualSync && !sensorId.trim()}
       >
         <Text style={styles.syncButtonText}>
           {isManualSync ? "Sync Sensor" : "Complete Sync"}
@@ -171,6 +212,7 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
         onPress={() => {
           if (isManualSync) {
             setShowManualSyncModal(false);
+            setSensorId("");
           } else {
             setShowSyncModal(false);
             setShowManualSyncModal(true);
@@ -279,11 +321,17 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
         visible={showQRScanner}
         onClose={() => setShowQRScanner(false)}
         title="Scan QR Code"
-        maxHeight={400}
+        maxHeight={500}
         footer={
           <View style={styles.modalFooter}>
             <TouchableOpacity
-              style={styles.syncButton}
+              style={[styles.syncButton, { backgroundColor: '#28a745' }]}
+              onPress={handleMockQRScan}
+            >
+              <Text style={styles.syncButtonText}>Mock Scan QR Code</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.syncButton, { backgroundColor: '#6c757d' }]}
               onPress={() => setShowQRScanner(false)}
             >
               <Text style={styles.syncButtonText}>Cancel</Text>
@@ -291,16 +339,26 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
           </View>
         }
       >
-        <View style={{ padding: 20, alignItems: 'center' }}>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: 'red', marginBottom: 20 }}>
-            🔴 QR SCANNER MODAL IS WORKING! 🔴
-          </Text>
-          <Text style={{ fontSize: 16, color: 'black', textAlign: 'center', marginBottom: 10 }}>
-            This modal is working! The QR scanner functionality will be added later.
-          </Text>
-          <Text style={{ fontSize: 14, color: 'blue', textAlign: 'center' }}>
-            Modal State: {showQRScanner ? 'VISIBLE' : 'HIDDEN'}
-          </Text>
+        <View style={styles.qrScannerContainer}>
+          <View style={styles.camera}>
+            <Ionicons name="qr-code-outline" size={80} color="#007bff" />
+            <Text style={styles.qrScannerTitle}>QR Code Scanner</Text>
+            <Text style={styles.qrScannerDescription}>
+              Position the QR code within the frame to scan
+            </Text>
+          </View>
+          
+          <View style={styles.qrOverlay}>
+            <View style={styles.qrFrame}>
+              <View style={[styles.qrCorner, styles.qrCornerTopLeft]} />
+              <View style={[styles.qrCorner, styles.qrCornerTopRight]} />
+              <View style={[styles.qrCorner, styles.qrCornerBottomLeft]} />
+              <View style={[styles.qrCorner, styles.qrCornerBottomRight]} />
+            </View>
+            <Text style={styles.qrInstructionText}>
+              Align QR code with the frame
+            </Text>
+          </View>
         </View>
       </CustomModal>
 
@@ -451,10 +509,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     lineHeight: 20,
   },
-  sensorIdInput: {
-    width: "100%",
-    marginBottom: 16,
-  },
 
   backToVehicleList: {
     flexDirection: "row",
@@ -507,6 +561,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  qrScannerTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#212529",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  qrScannerDescription: {
+    fontSize: 14,
+    color: "#6c757d",
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
   qrOverlay: {
     position: "absolute",
     bottom: 20,
@@ -517,11 +584,91 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: "center",
   },
+  qrFrame: {
+    width: 200,
+    height: 200,
+    position: "relative",
+    marginBottom: 16,
+  },
+  qrCorner: {
+    position: "absolute",
+    width: 20,
+    height: 20,
+    borderColor: "#007bff",
+    borderWidth: 3,
+  },
+  qrCornerTopLeft: {
+    top: 0,
+    left: 0,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+  },
+  qrCornerTopRight: {
+    top: 0,
+    right: 0,
+    borderLeftWidth: 0,
+    borderBottomWidth: 0,
+  },
+  qrCornerBottomLeft: {
+    bottom: 0,
+    left: 0,
+    borderRightWidth: 0,
+    borderTopWidth: 0,
+  },
+  qrCornerBottomRight: {
+    bottom: 0,
+    right: 0,
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+  },
   qrInstructionText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",
+  },
+  sensorIdContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e9ecef",
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    width: "100%",
+  },
+  sensorIdInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: "#212529",
+  },
+  sensorIdIcon: {
+    marginLeft: 8,
+  },
+  sensorIdPreview: {
+    backgroundColor: "#e3f2fd",
+    borderRadius: 8,
+    padding: 12,
+    width: "100%",
+    borderLeftWidth: 4,
+    borderLeftColor: "#007bff",
+  },
+  sensorIdPreviewLabel: {
+    fontSize: 12,
+    color: "#1976d2",
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  sensorIdPreviewValue: {
+    fontSize: 16,
+    color: "#1976d2",
+    fontWeight: "700",
+  },
+  syncButtonDisabled: {
+    backgroundColor: "#6c757d",
+    opacity: 0.6,
   },
 });
 

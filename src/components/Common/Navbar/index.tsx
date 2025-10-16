@@ -20,7 +20,7 @@ const Navbar = ({ currentScreen, onScreenChange }: NavbarProps) => {
         iconName = isActive ? 'home' : 'home-outline';
         break;
       case 'detailed':
-        iconName = isActive ? 'analytics' : 'analytics-outline';
+        iconName = isActive ? 'bar-chart' : 'bar-chart-outline';
         break;
       case 'devices':
         iconName = isActive ? 'bluetooth' : 'bluetooth-outline';

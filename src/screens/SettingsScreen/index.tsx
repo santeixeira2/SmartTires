@@ -5,12 +5,16 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useAuth } from '../../hooks/useAuth';
 import styles from './styles';
 
-const SettingsScreen = () => {
+interface SettingsScreenProps {
+  onLogout?: () => void;
+}
+
+const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [autoConnect, setAutoConnect] = useState(false);
   const [units, setUnits] = useState('imperial');
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const handleResetSettings = () => {
     Alert.alert(
@@ -57,7 +61,11 @@ const SettingsScreen = () => {
         { 
           text: 'Logout', 
           style: 'destructive',
-          onPress: logout
+          onPress: () => {
+            if (onLogout) {
+              onLogout();
+            }
+          }
         }
       ]
     );

@@ -16,13 +16,11 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
   showTemperature = false,
   onTirePress,
   style,
-  // Original overlay props
   frontLeft,
   frontRight,
   rearLeft,
   rearRight
 }) => {
-  // Color state for overlay functionality
   const [colors, setColors] = useState({
     frontLeft: "#212121",
     frontRight: "#212121",
@@ -30,12 +28,10 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
     rearRight: "#212121",
   });
 
-  // Use Ford Ranger image for all vehicle types
   const getVehicleImage = () => {
     return require('../../../assets/images/ford-ranger.png');
   };
 
-  // Original overlay color calculation
   useEffect(() => {
     if (frontLeft && frontRight && rearLeft && rearRight) {
       const calcColor = (tire: TireData) => {
