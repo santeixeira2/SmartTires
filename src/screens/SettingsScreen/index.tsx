@@ -3,6 +3,7 @@ import { View, Text, Switch, TouchableOpacity, ScrollView, Alert } from 'react-n
 import Header from '../../components/Common/Header';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useAuth } from '../../hooks/useAuth';
+import { useAppStore } from '../../store/AppStore';
 import styles from './styles';
 
 interface SettingsScreenProps {
@@ -10,6 +11,7 @@ interface SettingsScreenProps {
 }
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
+  const { state } = useAppStore();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [autoConnect, setAutoConnect] = useState(false);
@@ -47,7 +49,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
   const handleAbout = () => {
     Alert.alert(
       'About TST Smart Tire',
-      'TST Smart Tire v1.0.0\n\nA real-time tire monitoring application for commercial vehicles.\n\nDeveloped with React Native and Expo.',
+      'TST Smart Tire v1.0.0\n\nA real-time tire monitoring application for commercial vehicles.\n\nDeveloped with React Native v0.76.0.',
       [{ text: 'OK' }]
     );
   };
@@ -198,6 +200,37 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
           <Text style={[styles.settingValue, styles.dangerText]}>Reset</Text>
         </TouchableOpacity>
       </View> */}
+
+      {/* Registration Data Section */}
+      {state.registrationData && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Registration Data</Text>
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>User</Text>
+              <Text style={styles.settingDescription}>
+                {state.registrationData.user.name} ({state.registrationData.user.email})
+              </Text>
+            </View>
+          </View>
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>Main Vehicle</Text>
+              <Text style={styles.settingDescription}>
+                {state.registrationData.vehicle.name} ({state.registrationData.vehicle.axleType})
+              </Text>
+            </View>
+          </View>
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>Vehicles Registered</Text>
+              <Text style={styles.settingDescription}>
+                {state.vehiclesData.length} vehicle(s) • {state.registrationData.syncStatus.syncedCount} synced
+              </Text>
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* About Section */}
       <View style={styles.section}>

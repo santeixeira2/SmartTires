@@ -5,6 +5,8 @@ import RegisterLayout from './RegisterLayout';
 import VehicleList, { Vehicle } from '../../components/Vehicle/VehicleList';
 import TextBox from '../../components/Common/TextBox';
 import CustomModal from '../../components/Common/Modal';
+import { CameraScanner } from '../../components/Common/QrCodeScanner';
+import TireSyncModal from '../../components/Common/TireSyncModal';
 
 interface RegisterSyncSensorProps {
   onComplete: () => void;
@@ -24,6 +26,10 @@ interface RegisterSyncSensorProps {
       tireCount: number;
     }>;
   };
+  syncedVehicles?: {[key: string]: boolean};
+  onSyncedVehiclesUpdate?: (syncedVehicles: {[key: string]: boolean}) => void;
+  vehicleSensorIds?: {[key: string]: {[key: string]: string}};
+  onVehicleSensorIdsUpdate?: (vehicleSensorIds: {[key: string]: {[key: string]: string}}) => void;
 }
 
 const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
@@ -32,12 +38,19 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
   isLoading,
   error,
   setupData,
+  syncedVehicles: propSyncedVehicles,
+  onSyncedVehiclesUpdate,
+  vehicleSensorIds: propVehicleSensorIds,
+  onVehicleSensorIdsUpdate,
 }) => {
   const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
   const [showManualSyncModal, setShowManualSyncModal] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [sensorId, setSensorId] = useState("");
   const [showSyncModal, setShowSyncModal] = useState(false);
+  const [showTireSyncModal, setShowTireSyncModal] = useState(false);
+  const [syncedVehicles, setSyncedVehicles] = useState<{[key: string]: boolean}>(propSyncedVehicles || {});
+  const [vehicleSensorIds, setVehicleSensorIds] = useState<{[key: string]: {[key: string]: string}}>(propVehicleSensorIds || {});
 //   const [permission, requestPermission] = useCameraPermissions();
 
   const totalTires = (setupData.towables?.reduce((sum, towable) => sum + towable.tireCount, 0) || 0) + 4;
@@ -64,8 +77,15 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
   ];
 
   const handleVehicleSelect = (vehicleId: string) => {
+    // Check if vehicle is already synced
+    if (syncedVehicles[vehicleId]) {
+      console.log(`⚠️ Vehicle ${vehicleId} is already synced. Cannot sync again.`);
+      return;
+    }
+    
     setSelectedVehicle(vehicleId);
-    setShowSyncModal(true);
+    // Open tire sync modal to select which tire to sync
+    setShowTireSyncModal(true);
   };
 
   const handleSyncComplete = () => {
@@ -74,22 +94,57 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
     onComplete();
   };
 
-  const handleQRCodeScanned = ({ type, data }: { type: string; data: string }) => {
+  const handleTireSync = (tireId: string, sensorId: string) => {
+    console.log(`🔥 RegisterSyncSensor - Tire sync: ${tireId} with sensor: ${sensorId}`);
+    
+    // Just log success - no complex operations
+    console.log(`✅ Sensor ${sensorId} synced to ${tireId.replace('-', ' ')} tire on ${selectedVehicle}`);
+  };
+
+  const handleVehicleSyncComplete = (vehicleId: string, sensorIds: {[key: string]: string}) => {
+    console.log(`✅ Vehicle ${vehicleId} sync complete!`);
+    console.log(`📊 Sensor IDs for ${vehicleId}:`, sensorIds);
+    
+    const updatedSyncedVehicles = {
+      ...syncedVehicles,
+      [vehicleId]: true
+    };
+    setSyncedVehicles(updatedSyncedVehicles);
+    
+    // Save sensor IDs for this vehicle
+    setVehicleSensorIds(prev => ({
+      ...prev,
+      [vehicleId]: sensorIds
+    }));
+    
+    // Update parent component
+    if (onSyncedVehiclesUpdate) {
+      onSyncedVehiclesUpdate(updatedSyncedVehicles);
+    }
+    
+    // Update parent with sensor IDs
+    if (onVehicleSensorIdsUpdate) {
+      onVehicleSensorIdsUpdate(vehicleSensorIds);
+    }
+    
+    setShowTireSyncModal(false);
+  };
+
+  const handleQRCodeScanned = (data: string) => {
     console.log("QR Code scanned:", data);
     setSensorId(data);
     setShowQRScanner(false);
     setShowManualSyncModal(true);
-    Alert.alert("QR Code Scanned", `Sensor ID: ${data}`);
+    Alert.alert("QR Code Scanned", `Sensor ID: ${data}`, [
+      {
+        text: "Continue",
+        onPress: () => {
+          // The manual sync modal will already be open
+        }
+      }
+    ]);
   };
 
-  const handleMockQRScan = () => {
-    // Generate a mock sensor ID
-    const mockSensorId = `SENSOR-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
-    setSensorId(mockSensorId);
-    setShowQRScanner(false);
-    setShowManualSyncModal(true);
-    Alert.alert("QR Code Scanned", `Sensor ID: ${mockSensorId}`);
-  };
 
   const openQRScanner = async () => {
     console.log("Opening QR Scanner");
@@ -114,11 +169,7 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
         </Text>
         
         <View style={styles.syncOptions}>
-          <TouchableOpacity style={[styles.syncOptionButton, { backgroundColor: 'orange' }]} onPress={() => {
-            console.log("QR Code button pressed!");
-            Alert.alert("Test", "QR Code button works!");
-            openQRScanner();
-          }}>
+          <TouchableOpacity style={[styles.syncOptionButton, { backgroundColor: 'orange' }]} onPress={openQRScanner}>
             <Ionicons name="qr-code-outline" size={24} color="#007bff" />
             <Text style={[styles.syncOptionText, { color: 'white', fontWeight: 'bold' }]}>🔴 SCAN QR CODE 🔴</Text>
           </TouchableOpacity>
@@ -303,6 +354,7 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
             disabled={isLoading}
             title="Select Vehicle to Sync"
             subtitle="Tap on a vehicle to view or sync details"
+            syncedVehicles={syncedVehicles}
           />
         )}
       </CustomModal>
@@ -316,51 +368,22 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
         {renderManualSyncContent()}
       </CustomModal>
 
-      {/* QR Scanner Modal */}
-      <CustomModal
-        visible={showQRScanner}
-        onClose={() => setShowQRScanner(false)}
-        title="Scan QR Code"
-        maxHeight={500}
-        footer={
-          <View style={styles.modalFooter}>
-            <TouchableOpacity
-              style={[styles.syncButton, { backgroundColor: '#28a745' }]}
-              onPress={handleMockQRScan}
-            >
-              <Text style={styles.syncButtonText}>Mock Scan QR Code</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.syncButton, { backgroundColor: '#6c757d' }]}
-              onPress={() => setShowQRScanner(false)}
-            >
-              <Text style={styles.syncButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        }
-      >
-        <View style={styles.qrScannerContainer}>
-          <View style={styles.camera}>
-            <Ionicons name="qr-code-outline" size={80} color="#007bff" />
-            <Text style={styles.qrScannerTitle}>QR Code Scanner</Text>
-            <Text style={styles.qrScannerDescription}>
-              Position the QR code within the frame to scan
-            </Text>
-          </View>
-          
-          <View style={styles.qrOverlay}>
-            <View style={styles.qrFrame}>
-              <View style={[styles.qrCorner, styles.qrCornerTopLeft]} />
-              <View style={[styles.qrCorner, styles.qrCornerTopRight]} />
-              <View style={[styles.qrCorner, styles.qrCornerBottomLeft]} />
-              <View style={[styles.qrCorner, styles.qrCornerBottomRight]} />
-            </View>
-            <Text style={styles.qrInstructionText}>
-              Align QR code with the frame
-            </Text>
-          </View>
-        </View>
-      </CustomModal>
+      {/* Real QR Scanner */}
+      {showQRScanner && (
+        <CameraScanner
+          setIsCameraShown={setShowQRScanner}
+          onReadCode={handleQRCodeScanned}
+        />
+      )}
+
+      {/* Tire Sync Modal */}
+      <TireSyncModal
+        visible={showTireSyncModal}
+        onClose={() => setShowTireSyncModal(false)}
+        onTireSync={handleTireSync}
+        onVehicleSyncComplete={(sensorIds) => handleVehicleSyncComplete(selectedVehicle || '', sensorIds)}
+        vehicleName={selectedVehicle || 'Unknown Vehicle'}
+      />
 
     </>
   );

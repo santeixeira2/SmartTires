@@ -402,7 +402,7 @@ const showMapTemplate = (): void => {
 const MapView = () => {
   return (
     <View style={{ flex: 1, backgroundColor: 'red', justifyContent: 'center', alignItems: 'center' }}>
-      <Image source={require("../../assets/images/map.png")} />
+      <Image source={require("../../assets/images/ford-ranger.png")} />
     </View>
   );
 };

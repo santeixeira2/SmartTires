@@ -81,6 +81,21 @@ const styles = StyleSheet.create({
       color: "#212529",
       fontWeight: "500",
     },
+    syncedBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#d4edda',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+      marginLeft: 8,
+    },
+    syncedText: {
+      fontSize: 12,
+      color: '#28a745',
+      fontWeight: '600',
+      marginLeft: 4,
+    },
   });
   
   export default styles;

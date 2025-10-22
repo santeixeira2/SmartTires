@@ -32,11 +32,13 @@ const styles = StyleSheet.create({
     },
     tire: {
       position: 'absolute',
-      width: 30,
-      height: 60,
+      width: 50,
+      height: 80,
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: 7,
+      borderWidth: 2,
+      borderColor: 'rgba(255, 255, 255, 0.3)',
     },
     tireLabel: {
       fontSize: 10,
@@ -56,34 +58,40 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       justifyContent: 'center',
     },
-    truckImage: {
+    truckImageContainer: {
       width: '100%',
       margin: 20,
       position: 'relative',
-      zIndex: 2,
-
+      zIndex: 3,
+    },
+    truckImage: {
+      width: '100%',
     },
     tiresOverlay: {
       position: 'absolute',
       width: '100%',
       height: '100%',
+      zIndex: 1,
     },
     frontLeftTire: {
       top: 15,
       left: 70,
-      zIndex: 1
+      zIndex: 2
     },
     frontRightTire: {
       top: 15,
       right: 70,
+      zIndex: 2
     },
     rearLeftTire: {
       bottom: 35,
       left: 70,
+      zIndex: 2
     },
     rearRightTire: {
       bottom: 35,
       right: 70,
+      zIndex: 2
     },
   });
 

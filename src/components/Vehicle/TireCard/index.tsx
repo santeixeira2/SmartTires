@@ -10,6 +10,7 @@ export interface TireData {
   temperature: number;
   connected: boolean;
   deviceId?: string;
+  position?: string;
 }
 
 export interface TireCardProps {
@@ -69,7 +70,7 @@ const TireCard: React.FC<TireCardProps> = ({ tire, style, onPress }) => {
                   },
                 ]}
               >
-                {tire.pressure} PSI
+                {tire.pressure.toFixed(1)} PSI
               </Text>
             </View>
             <View style={styles.detailItem}>
@@ -91,7 +92,7 @@ const TireCard: React.FC<TireCardProps> = ({ tire, style, onPress }) => {
                   },
                 ]}
               >
-                {tire.temperature}°F
+                {tire.temperature.toFixed(1)}°F
               </Text>
             </View>
           </View>

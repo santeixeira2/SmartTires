@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image } from 'react-native';
+import { View, Text, Image, TouchableOpacity, Alert } from 'react-native';
 import styles from './TruckTopDownView.style';
 import { 
   TruckTopDownViewProps, 
@@ -19,21 +19,60 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
   frontLeft,
   frontRight,
   rearLeft,
-  rearRight
+  rearRight,
+  syncedTires
 }) => {
+  // console.log('🔥 TruckTopDownView - onTirePress prop:', onTirePress);
+  
+  // Set tire colors based on sync status
+  const getTireColor = (tireId: string) => {
+    // If syncedTires prop is provided (sync modal context), use sync colors
+    if (syncedTires) {
+      const isSynced = syncedTires[tireId];
+      console.log(`🔥 TruckTopDownView - Tire ${tireId}: synced=${isSynced}, color=${isSynced ? "#007AFF" : "#6c757d"}`);
+      return isSynced ? "#007AFF" : "#6c757d"; // Blue if synced, gray if not
+    }
+    // Default colors for normal usage (HomeScreen)
+    return "#212121";
+  };
+  
   const [colors, setColors] = useState({
-    frontLeft: "#212121",
-    frontRight: "#212121",
-    rearLeft: "#212121",
-    rearRight: "#212121",
+    frontLeft: getTireColor('front-left'),
+    frontRight: getTireColor('front-right'),
+    rearLeft: getTireColor('rear-left'),
+    rearRight: getTireColor('rear-right'),
   });
 
+  // Update colors when syncedTires changes (only in sync modal)
+  useEffect(() => {
+    const getTireColorForSync = (tireId: string) => {
+      // If syncedTires prop is provided (sync modal context), use sync colors
+      if (syncedTires) {
+        const isSynced = syncedTires[tireId];
+        console.log(`🔥 TruckTopDownView - Tire ${tireId}: synced=${isSynced}, color=${isSynced ? "#007AFF" : "#6c757d"}`);
+        return isSynced ? "#007AFF" : "#6c757d"; // Blue if synced, gray if not
+      }
+      // Default colors for normal usage (HomeScreen)
+      return "#212121";
+    };
+
+    const newColors = {
+      frontLeft: getTireColorForSync('front-left'),
+      frontRight: getTireColorForSync('front-right'),
+      rearLeft: getTireColorForSync('rear-left'),
+      rearRight: getTireColorForSync('rear-right'),
+    };
+    console.log('🔥 TruckTopDownView - Updating colors:', newColors);
+    setColors(newColors);
+  }, [syncedTires]);
+
   const getVehicleImage = () => {
-    return require('../../../assets/images/ford-ranger.png');
+    return require('../../../assets/images/ford-ranger-topdown.png');
   };
 
   useEffect(() => {
-    if (frontLeft && frontRight && rearLeft && rearRight) {
+    // Only apply pressure-based colors if NOT in sync modal context
+    if (frontLeft && frontRight && rearLeft && rearRight && !syncedTires) {
       const calcColor = (tire: TireData) => {
         if (tire.psi < 28 || tire.temp > 160) return "red";
         if (tire.psi < 32) return "orange"; 
@@ -47,7 +86,7 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
         rearRight: calcColor(rearRight),
       });
     }
-  }, [frontLeft, frontRight, rearLeft, rearRight]);
+  }, [frontLeft, frontRight, rearLeft, rearRight, syncedTires]);
 
   const getVehicleColor = () => {
     switch (vehicleType) {
@@ -65,7 +104,7 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
   };
 
   const renderTire = (tire: TirePosition) => (
-    <View
+    <TouchableOpacity
       key={tire.id}
       style={[
         styles.tire,
@@ -75,7 +114,8 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
           backgroundColor: tire.isConnected ? getVehicleColor() : '#e9ecef',
         }
       ]}
-      onTouchEnd={() => onTirePress?.(tire.id)}
+      onPress={() => onTirePress?.(tire.id)}
+      activeOpacity={0.7}
     >
       {showLabels && (
         <Text style={styles.tireLabel}>{tire.label}</Text>
@@ -86,24 +126,42 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
       {showTemperature && tire.temperature && (
         <Text style={styles.tireData}>{tire.temperature}°C</Text>
       )}
-    </View>
+    </TouchableOpacity>
   );
 
   if (frontLeft && frontRight && rearLeft && rearRight) {
     return (
       <View style={[styles.container, style]}>
         <View style={styles.truckContainer}>
-          <Image 
-            source={getVehicleImage()} 
-            style={styles.truckImage}
-            resizeMode="contain"
-          />
+          <View style={styles.truckImageContainer} pointerEvents="none">
+            <Image 
+              source={getVehicleImage()} 
+              style={styles.truckImage}
+              resizeMode="contain"
+            />
+          </View>
           
           <View style={styles.tiresOverlay}>
-            <View style={[styles.tire, styles.frontLeftTire, { backgroundColor: colors.frontLeft }]} />
-            <View style={[styles.tire, styles.frontRightTire, { backgroundColor: colors.frontRight }]} />
-            <View style={[styles.tire, styles.rearLeftTire, { backgroundColor: colors.rearLeft }]} />
-            <View style={[styles.tire, styles.rearRightTire, { backgroundColor: colors.rearRight }]} />
+            <TouchableOpacity 
+              style={[styles.tire, styles.frontLeftTire, { backgroundColor: colors.frontLeft }]} 
+              onPress={() => onTirePress?.('front-left')}
+              activeOpacity={0.5}
+            />
+            <TouchableOpacity 
+              style={[styles.tire, styles.frontRightTire, { backgroundColor: colors.frontRight }]} 
+              onPress={() => onTirePress?.('front-right')}
+              activeOpacity={0.5}
+            />
+            <TouchableOpacity 
+              style={[styles.tire, styles.rearLeftTire, { backgroundColor: colors.rearLeft }]} 
+              onPress={() => onTirePress?.('rear-left')}
+              activeOpacity={0.5}
+            />
+            <TouchableOpacity 
+              style={[styles.tire, styles.rearRightTire, { backgroundColor: colors.rearRight }]} 
+              onPress={() => onTirePress?.('rear-right')}
+              activeOpacity={0.5}
+            />
           </View>
         </View>
       </View>

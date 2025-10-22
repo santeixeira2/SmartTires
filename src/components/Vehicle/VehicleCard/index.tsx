@@ -37,7 +37,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onPress, style }) =>
         {/* Image */}
         <View style={styles.imageContainer}>
           <Image 
-            source={require('../../../assets/images/map.png')} 
+            source={require('../../../assets/images/ford-ranger.png')} 
             style={styles.vehicleImage}
             resizeMode="contain"
           />

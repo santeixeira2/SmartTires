@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TextInputProps, TouchableOpacity } from 'react-native';
-import Ionicons  from 'react-native-vector-icons/Ionicons';
 import textBoxStyles from './textBoxStyles';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 interface TextBoxProps extends Omit<TextInputProps, "value" | "onChangeText" | "placeholder"> {
     label?: string;
@@ -29,7 +29,7 @@ const TextBox = ({
         <View style={textBoxStyles.container}>
       {label && <Text style={textBoxStyles.label}>{label}</Text>}
       <View style={textBoxStyles.inputContainer}>
-        {icon && <Ionicons name={icon} size={20} color="#6c757d" style={textBoxStyles.inputIcon} />}
+        {icon && <Icon name={icon} size={20} color="#6c757d" style={textBoxStyles.inputIcon} />}
 
         <TextInput
           style={textBoxStyles.input}
@@ -40,6 +40,8 @@ const TextBox = ({
           autoCapitalize="none"
           autoCorrect={false}
           editable={editable}
+          returnKeyType="next"
+          blurOnSubmit={false}
           {...rest}
         />
 
@@ -49,7 +51,7 @@ const TextBox = ({
             onPress={() => setShowPassword(!showPassword)}
             disabled={!editable}
           >
-            <Ionicons
+            <Icon
               name={showPassword ? "eye-off-outline" : "eye-outline"}
               size={20}
               color="#6c757d"

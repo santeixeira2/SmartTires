@@ -8,7 +8,7 @@ import {
     Platform,
     ScrollView,
 } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/Ionicons';
 import styles from './LoginForm.style';
 import TextBox from '../../components/Common/TextBox';
 import { LoginFormProps } from './LoginForm.types';
@@ -62,7 +62,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
                     {error && (
                         <View style={styles.errorContainer}>
-                            <Ionicons name="alert-circle-outline" size={16} color="#dc3545" />
+                            <Icon name="alert-circle-outline" size={16} color="#dc3545" />
                             <Text style={styles.errorText}>{error}</Text>
                         </View>
                     )}
@@ -73,7 +73,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                         disabled={isLoading}
                     >
                         <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-                            {rememberMe && <Ionicons name="checkmark-outline" size={16} color="#fff" />}
+                            {rememberMe && <Icon name="checkmark-outline" size={16} color="#fff" />}
                         </View>
                         <Text style={styles.rememberMeText}>Remember me</Text>
                     </TouchableOpacity>
@@ -85,7 +85,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                     >
                         {isLoading ? (
                         <View style={styles.loadingContainer}>
-                            <Ionicons name="reload" size={20} color="#fff" style={styles.spinning} />
+                            <Icon name="reload" size={20} color="#fff" style={styles.spinning} />
                             <Text style={styles.loginButtonText}>Signing In...</Text>
                         </View>
                         ) : (

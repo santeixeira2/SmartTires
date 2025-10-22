@@ -1,0 +1,520 @@
+import React, { useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  TextInput,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import TruckTopDownView from '../../Vehicle/TruckTopDownView';
+import { CameraScanner } from '../QrCodeScanner';
+
+interface TireSyncModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onTireSync: (tireId: string, sensorId: string) => void;
+  onVehicleSyncComplete: (sensorIds: {[key: string]: string}) => void;
+  vehicleName: string;
+}
+
+const TireSyncModal: React.FC<TireSyncModalProps> = ({
+  visible,
+  onClose,
+  onTireSync,
+  onVehicleSyncComplete,
+  vehicleName,
+}) => {
+  const [selectedTire, setSelectedTire] = useState<string | null>(null);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualSensorId, setManualSensorId] = useState('');
+  const [syncedTires, setSyncedTires] = useState<{[key: string]: string}>({});
+  
+  // Reset synced tires when modal opens
+  React.useEffect(() => {
+    if (visible) {
+      console.log('🔥 TireSyncModal - Modal opened, resetting syncedTires');
+      setSyncedTires({});
+    }
+  }, [visible]);
+
+  // Debug syncedTires changes
+  React.useEffect(() => {
+    console.log('🔥 TireSyncModal - syncedTires updated:', syncedTires);
+  }, [syncedTires]);
+
+  // Use useCallback to prevent unnecessary re-renders
+  const handleTirePress = useCallback((tireId: string) => {
+    console.log(`🔥 TireSyncModal - Tire selected: ${tireId}`);
+    setSelectedTire(tireId);
+    setShowQRScanner(false);
+    setShowManualInput(false);
+  }, []);
+
+  const handleQRScan = useCallback((sensorId: string) => {
+    if (selectedTire) {
+      const tireId = selectedTire; // Capture before reset
+      console.log(`🔥 TireSyncModal - QR scanned: ${sensorId} for tire: ${tireId}`);
+      
+      // Add to synced tires
+      setSyncedTires(prev => {
+        const newSyncedTires = {
+          ...prev,
+          [tireId]: sensorId
+        };
+        console.log('🔥 TireSyncModal - Adding tire to synced:', tireId, sensorId, newSyncedTires);
+        return newSyncedTires;
+      });
+      
+      // Close scanner and reset selection
+      setShowQRScanner(false);
+      setSelectedTire(null);
+      
+      // Call parent to notify sync
+      onTireSync(tireId, sensorId);
+    }
+  }, [selectedTire, onTireSync]);
+
+  const handleManualInput = useCallback((sensorId: string) => {
+    if (selectedTire) {
+      const tireId = selectedTire; // Capture before reset
+      console.log(`🔥 TireSyncModal - Manual input: ${sensorId} for tire: ${tireId}`);
+      
+      // Add to synced tires
+      setSyncedTires(prev => {
+        const newSyncedTires = {
+          ...prev,
+          [tireId]: sensorId
+        };
+        console.log('🔥 TireSyncModal - Adding tire to synced (manual):', tireId, sensorId, newSyncedTires);
+        return newSyncedTires;
+      });
+      
+      // Close manual input and reset selection
+      setShowManualInput(false);
+      setManualSensorId('');
+      setSelectedTire(null);
+      
+      // Call parent to notify sync
+      onTireSync(tireId, sensorId);
+    }
+  }, [selectedTire, onTireSync]);
+
+  const handleClose = useCallback(() => {
+    // Reset all states
+    setSelectedTire(null);
+    setShowQRScanner(false);
+    setShowManualInput(false);
+    setManualSensorId('');
+    onClose();
+  }, [onClose]);
+
+  const resetSelection = useCallback(() => {
+    setSelectedTire(null);
+    setShowQRScanner(false);
+    setShowManualInput(false);
+    setManualSensorId('');
+  }, []);
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={handleClose}
+    >
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Sync Sensor to Tire</Text>
+          <Text style={styles.subtitle}>{vehicleName}</Text>
+          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+            <Icon name="close" size={20} color="#666" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.content}>
+          {!selectedTire ? (
+            <View style={styles.tireSelectionContainer}>
+              <Text style={styles.instructionText}>
+                Select a tire to sync with a sensor:
+              </Text>
+              
+              <View style={styles.truckContainer}>
+                <TruckTopDownView
+                  frontLeft={{ psi: 32, temp: 25 }}
+                  frontRight={{ psi: 31, temp: 26 }}
+                  rearLeft={{ psi: 28, temp: 30 }}
+                  rearRight={{ psi: 29, temp: 28 }}
+                  onTirePress={handleTirePress}
+                  // Pass synced state for visual indicators
+                  syncedTires={syncedTires}
+                />
+              </View>
+              
+              {/* Synced Tires List */}
+              {Object.keys(syncedTires).length > 0 && (
+                <View style={styles.syncedTiresContainer}>
+                  <Text style={styles.syncedTiresTitle}>Synced Tires:</Text>
+                  {Object.entries(syncedTires).map(([tireId, sensorId]) => (
+                    <View key={tireId} style={styles.syncedTireItem}>
+                      <Icon name="checkmark-circle" size={20} color="#007AFF" />
+                      <Text style={styles.syncedTireText}>
+                        {tireId.replace('-', ' ').toUpperCase()}: {sensorId}
+                      </Text>
+                    </View>
+                  ))}
+                  
+                  {/* Complete Sync Button */}
+                  {Object.keys(syncedTires).length === 4 && (
+                    <TouchableOpacity
+                      style={styles.completeSyncButton}
+                      onPress={() => {
+                        console.log('✅ All 4 tires synced! Vehicle sync complete.');
+                        console.log('📊 Sensor IDs saved:', syncedTires);
+                        onVehicleSyncComplete(syncedTires);
+                      }}
+                    >
+                      <Icon name="checkmark-circle" size={24} color="#fff" />
+                      <Text style={styles.completeSyncButtonText}>
+                        Complete Vehicle Sync ({Object.keys(syncedTires).length}/4)
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+            </View>
+          ) : (
+            <View style={styles.syncOptionsContainer}>
+              <Text style={styles.selectedTireText}>
+                Selected Tire: {selectedTire.replace('-', ' ').toUpperCase()}
+              </Text>
+              
+              <View style={styles.optionsContainer}>
+                <TouchableOpacity
+                  style={styles.optionButton}
+                  onPress={() => setShowQRScanner(true)}
+                >
+                  <Icon name="qr-code-outline" size={24} color="#fff" />
+                  <Text style={styles.optionButtonText}>Scan QR Code</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.optionButton}
+                  onPress={() => setShowManualInput(true)}
+                >
+                  <Icon name="create-outline" size={24} color="#fff" />
+                  <Text style={styles.optionButtonText}>Enter Manually</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={resetSelection}
+                >
+                  <Icon name="arrow-back-outline" size={20} color="#666" />
+                  <Text style={styles.backButtonText}>Back to Tire Selection</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {showQRScanner && (
+            <View style={styles.scannerContainer}>
+              <View style={styles.scannerHeader}>
+                <TouchableOpacity
+                  style={styles.scannerCloseButton}
+                  onPress={() => setShowQRScanner(false)}
+                >
+                  <Icon name="close" size={24} color="#fff" />
+                </TouchableOpacity>
+                <Text style={styles.scannerTitle}>Scan QR Code</Text>
+              </View>
+              <CameraScanner
+                setIsCameraShown={setShowQRScanner}
+                onReadCode={handleQRScan}
+              />
+            </View>
+          )}
+
+          {showManualInput && (
+            <View style={styles.manualInputContainer}>
+              <View style={styles.manualInputHeader}>
+                <TouchableOpacity
+                  style={styles.manualInputCloseButton}
+                  onPress={() => {
+                    setShowManualInput(false);
+                    setManualSensorId('');
+                  }}
+                >
+                  <Icon name="close" size={24} color="#333" />
+                </TouchableOpacity>
+                <Text style={styles.manualInputTitle}>Enter Sensor ID</Text>
+              </View>
+              
+              <View style={styles.inputSection}>
+                <TextInput
+                  style={styles.textInput}
+                  value={manualSensorId}
+                  onChangeText={setManualSensorId}
+                  placeholder="Enter sensor ID..."
+                  autoFocus={true}
+                  returnKeyType="done"
+                  onSubmitEditing={() => {
+                    if (manualSensorId.trim()) {
+                      handleManualInput(manualSensorId.trim());
+                    }
+                  }}
+                />
+                
+                <TouchableOpacity
+                  style={[styles.submitButton, !manualSensorId.trim() && styles.submitButtonDisabled]}
+                  onPress={() => {
+                    if (manualSensorId.trim()) {
+                      handleManualInput(manualSensorId.trim());
+                    }
+                  }}
+                  disabled={!manualSensorId.trim()}
+                >
+                  <Text style={styles.submitButtonText}>Submit</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+      </SafeAreaView>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    flex: 1,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  closeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+  },
+  tireSelectionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  instructionText: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  truckContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  syncOptionsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectedTireText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 30,
+    textAlign: 'center',
+  },
+  optionsContainer: {
+    width: '100%',
+    maxWidth: 300,
+  },
+  optionButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginBottom: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 10,
+  },
+  backButton: {
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  backButtonText: {
+    color: '#666',
+    fontSize: 14,
+    marginLeft: 5,
+  },
+  scannerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#000',
+  },
+  scannerHeader: {
+    position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    zIndex: 10,
+  },
+  scannerCloseButton: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+    padding: 10,
+  },
+  scannerTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  manualInputContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#fff',
+  },
+  manualInputHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  manualInputCloseButton: {
+    padding: 5,
+  },
+  manualInputTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  inputSection: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 15,
+    fontSize: 16,
+    marginBottom: 30,
+    backgroundColor: '#fff',
+  },
+  submitButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  syncedTiresContainer: {
+    marginTop: 20,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    padding: 15,
+  },
+  syncedTiresTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  syncedTireItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  syncedTireText: {
+    fontSize: 14,
+    color: '#333',
+    marginLeft: 8,
+  },
+  completeSyncButton: {
+    backgroundColor: '#28a745',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 15,
+  },
+  completeSyncButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+});
+
+export default TireSyncModal;

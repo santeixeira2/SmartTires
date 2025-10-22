@@ -4,6 +4,7 @@ import RegisterUser from './RegisterUser';
 import RegisterSetup from './RegisterSetup';
 import RegisterSummary from './RegisterSummary';
 import RegisterSyncSensor from './RegisterSyncSensor';
+import { useAppActions, RegistrationData } from '../../store/AppStore';
 
 interface RegisterFormMultiStepProps {
   onSubmit: (data: {
@@ -29,6 +30,8 @@ const RegisterFormMultiStep: React.FC<RegisterFormMultiStepProps> = ({
   error,
   onBackToLogin,
 }) => {
+  const { setRegistrationData, setDemoUser, setVehiclesData } = useAppActions();
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [showDevNav, setShowDevNav] = useState(__DEV__); // Only show in development
   const [userData, setUserData] = useState<{
@@ -50,6 +53,8 @@ const RegisterFormMultiStep: React.FC<RegisterFormMultiStepProps> = ({
       tireCount: number;
     }>;
   } | null>(null);
+  const [syncedVehicles, setSyncedVehicles] = useState<{[key: string]: boolean}>({});
+  const [vehicleSensorIds, setVehicleSensorIds] = useState<{[key: string]: {[key: string]: string}}>({});
 
   // Development navigation
   const jumpToStep = (step: number) => {
@@ -118,8 +123,94 @@ const RegisterFormMultiStep: React.FC<RegisterFormMultiStepProps> = ({
       ...setupData,
     };
 
+    // Create comprehensive registration JSON
+    const registrationData: RegistrationData = {
+      user: {
+        name: userData.name,
+        email: userData.email,
+        role: setupData.role,
+        registrationDate: new Date().toISOString(),
+      },
+      vehicle: {
+        name: setupData.vehicleName || 'Unknown Vehicle',
+        type: setupData.towingType || 'Unknown Type',
+        axleType: setupData.axleTowingType || 'Unknown Axle',
+        role: setupData.role,
+      },
+      towables: setupData.towables || [],
+      syncedVehicles: syncedVehicles,
+      vehicleSensorIds: vehicleSensorIds,
+      syncStatus: {
+        totalVehicles: Object.keys(syncedVehicles).length,
+        syncedCount: Object.values(syncedVehicles).filter(Boolean).length,
+        allSynced: Object.values(syncedVehicles).every(Boolean),
+      },
+      metadata: {
+        registrationStep: 'completed',
+        timestamp: new Date().toISOString(),
+        version: '1.0.0',
+      }
+    };
+
+    console.log('🚀 REGISTRATION COMPLETE - Final JSON Data:');
+    console.log(JSON.stringify(registrationData, null, 2));
+
+    // Save to store
+    setRegistrationData(registrationData);
+    
+    // Check if this is demo user
+    const isDemoUser = userData.email === 'demo@tstsmarttires.com';
+    setDemoUser(isDemoUser);
+    
+    // Generate vehicles data from registration
+    const vehicles = [];
+    
+    // Add main vehicle
+    vehicles.push({
+      id: 'main-vehicle',
+      name: registrationData.vehicle.name,
+      towingType: registrationData.vehicle.role === 'power_unit' ? 'towing' : 'towable',
+      axleType: registrationData.vehicle.axleType,
+      connectionStatus: 'connected',
+      imageUrl: 'map.png',
+      tireCount: 4, // Default for main vehicle
+      synced: registrationData.syncStatus.allSynced,
+      tireData: {
+        frontLeft: { psi: 32, temp: 25 },
+        frontRight: { psi: 31, temp: 26 },
+        rearLeft: { psi: 28, temp: 30 },
+        rearRight: { psi: 29, temp: 28 },
+      }
+    });
+
+    // Add towables
+    if (registrationData.towables && registrationData.towables.length > 0) {
+      registrationData.towables.forEach((towable) => {
+        vehicles.push({
+          id: towable.id,
+          name: towable.name,
+          towingType: 'towable',
+          axleType: towable.axle,
+          connectionStatus: 'connected',
+          imageUrl: 'map.png',
+          tireCount: towable.tireCount,
+          synced: registrationData.syncedVehicles[towable.id] || false,
+          tireData: {
+            frontLeft: { psi: 30, temp: 24 },
+            frontRight: { psi: 29, temp: 25 },
+            rearLeft: { psi: 27, temp: 29 },
+            rearRight: { psi: 28, temp: 27 },
+          }
+        });
+      });
+    }
+    
+    setVehiclesData(vehicles);
+    console.log('✅ Registration data saved to store');
+
     onSubmit(completeData);
   };
+
 
   const handleBackToUser = () => {
     setCurrentStep(1);
@@ -184,6 +275,10 @@ const RegisterFormMultiStep: React.FC<RegisterFormMultiStepProps> = ({
           isLoading={isLoading}
           error={error}
           setupData={setupData!}
+          syncedVehicles={syncedVehicles}
+          onSyncedVehiclesUpdate={setSyncedVehicles}
+          vehicleSensorIds={vehicleSensorIds}
+          onVehicleSensorIdsUpdate={setVehicleSensorIds}
         />
       );
     }

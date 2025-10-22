@@ -27,4 +27,6 @@ export interface TireData {
     frontRight?: TireData;
     rearLeft?: TireData;
     rearRight?: TireData;
+    // Synced tires tracking
+    syncedTires?: {[key: string]: string};
   }

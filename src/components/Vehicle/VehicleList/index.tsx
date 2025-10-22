@@ -23,6 +23,7 @@ interface VehicleListProps {
   disabled?: boolean;
   title?: string;
   subtitle?: string;
+  syncedVehicles?: {[key: string]: boolean};
 }
 
 const VehicleList: React.FC<VehicleListProps> = ({
@@ -31,6 +32,7 @@ const VehicleList: React.FC<VehicleListProps> = ({
   disabled = false,
   title = "Select Vehicle",
   subtitle = "Tap on a vehicle to select it",
+  syncedVehicles = {},
 }) => {
   return (
     <View style={styles.container}>
@@ -56,6 +58,12 @@ const VehicleList: React.FC<VehicleListProps> = ({
               <Text style={styles.vehicleName}>{vehicle.name}</Text>
               <Text style={styles.vehicleType}>{vehicle.type}</Text>
             </View>
+            {syncedVehicles[vehicle.id] && (
+              <View style={styles.syncedBadge}>
+                <Ionicons name="checkmark-circle" size={20} color="#28a745" />
+                <Text style={styles.syncedText}>Synced</Text>
+              </View>
+            )}
             <View style={styles.vehicleStats}>
               <Text style={styles.vehicleTireCount}>{vehicle.tireCount} tires</Text>
               <Ionicons name="chevron-forward" size={20} color="#6c757d" />

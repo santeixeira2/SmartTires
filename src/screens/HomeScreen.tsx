@@ -1,22 +1,50 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, Dimensions } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Dimensions, Alert, TouchableOpacity } from "react-native";
 import Header from "../components/Common/Header";
 import TruckTopDownView from "../components/Vehicle/TruckTopDownView";
-import vehiclesData from "../data/vehicles.json";
+import { useAppStore } from "../store/AppStore";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 80;
 
-const HomeScreen: React.FC<HomeScreenProps> = ({ frontLeft, frontRight, rearLeft, rearRight }) => {
-  const vehicles = vehiclesData.map((vehicle) => ({
-    ...vehicle,
-    tireData: {
-      frontLeft: { psi: 32, temp: 25 },
-      frontRight: { psi: 31, temp: 26 },
-      rearLeft: { psi: 28, temp: 30 },
-      rearRight: { psi: 29, temp: 28 },
+interface HomeScreenProps {
+  frontLeft?: { psi: number; temp: number };
+  frontRight?: { psi: number; temp: number };
+  rearLeft?: { psi: number; temp: number };
+  rearRight?: { psi: number; temp: number };
+  onNavigateToDetailed?: (tireId: string, vehicleName: string) => void;
+}
+
+const HomeScreen: React.FC<HomeScreenProps> = ({ frontLeft, frontRight, rearLeft, rearRight, onNavigateToDetailed }) => {
+  const { state } = useAppStore();
+  
+  // Use vehicles from store if available, otherwise fallback to empty array
+  const vehicles = state.vehiclesData.length > 0 ? state.vehiclesData : [];
+  
+  // If no vehicles, show a message
+  if (vehicles.length === 0) {
+    return (
+      <ScrollView style={styles.container}>
+        <Header title="Smart Tire Overview" subtitle="Real-time Tire Monitoring" />
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateText}>No vehicles registered yet</Text>
+          <Text style={styles.emptyStateSubtext}>Complete the registration process to see your vehicles here</Text>
+        </View>
+      </ScrollView>
+    );
+  }
+
+  const handleTirePress = (tireId: string, vehicleName: string) => {
+    console.log(`🔥 HomeScreen - Tire pressed: ${tireId} on ${vehicleName}`);
+    console.log(`🔥 HomeScreen - onNavigateToDetailed function:`, onNavigateToDetailed);
+    if (onNavigateToDetailed) {
+      console.log(`🔥 HomeScreen - Calling onNavigateToDetailed...`);
+      onNavigateToDetailed(tireId, vehicleName);
+    } else {
+      console.log(`🔥 HomeScreen - onNavigateToDetailed is null/undefined`);
+      Alert.alert('Tire Selected', `You selected ${tireId} tire on ${vehicleName}`);
     }
-  }));
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -40,10 +68,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ frontLeft, frontRight, rearLeft
               </View>
               <View style={styles.svgContainer}>
                 <TruckTopDownView 
-                  frontLeft={vehicle.tireData.frontLeft}
-                  frontRight={vehicle.tireData.frontRight}
-                  rearLeft={vehicle.tireData.rearLeft}
-                  rearRight={vehicle.tireData.rearRight}
+                  frontLeft={vehicle.tireData?.frontLeft || { psi: 32, temp: 25 }}
+                  frontRight={vehicle.tireData?.frontRight || { psi: 31, temp: 26 }}
+                  rearLeft={vehicle.tireData?.rearLeft || { psi: 28, temp: 30 }}
+                  rearRight={vehicle.tireData?.rearRight || { psi: 29, temp: 28 }}
+                  onTirePress={(tireId) => handleTirePress(tireId, vehicle.name)}
                 />
               </View>
             </View>
@@ -157,6 +186,26 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: 14,
     color: '#495057',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+    marginTop: 100,
+  },
+  emptyStateText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#212529',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  emptyStateSubtext: {
+    fontSize: 16,
+    color: '#6c757d',
+    textAlign: 'center',
+    lineHeight: 24,
   },
 });
 
