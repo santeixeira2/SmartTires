@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, Alert } from 'react-native';
 import styles from './TruckTopDownView.style';
+import AxleTopDownView, { AxleTireData } from './AxleTopDownView';
 import { 
   TruckTopDownViewProps, 
   TireData, 
@@ -20,19 +21,16 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
   frontRight,
   rearLeft,
   rearRight,
-  syncedTires
+  syncedTires,
+  axleType,
+  dynamicTireData
 }) => {
-  // console.log('🔥 TruckTopDownView - onTirePress prop:', onTirePress);
-  
-  // Set tire colors based on sync status
   const getTireColor = (tireId: string) => {
-    // If syncedTires prop is provided (sync modal context), use sync colors
     if (syncedTires) {
       const isSynced = syncedTires[tireId];
       console.log(`🔥 TruckTopDownView - Tire ${tireId}: synced=${isSynced}, color=${isSynced ? "#007AFF" : "#6c757d"}`);
-      return isSynced ? "#007AFF" : "#6c757d"; // Blue if synced, gray if not
+      return isSynced ? "#007AFF" : "#6c757d";
     }
-    // Default colors for normal usage (HomeScreen)
     return "#212121";
   };
   
@@ -43,16 +41,13 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
     rearRight: getTireColor('rear-right'),
   });
 
-  // Update colors when syncedTires changes (only in sync modal)
   useEffect(() => {
     const getTireColorForSync = (tireId: string) => {
-      // If syncedTires prop is provided (sync modal context), use sync colors
       if (syncedTires) {
         const isSynced = syncedTires[tireId];
         console.log(`🔥 TruckTopDownView - Tire ${tireId}: synced=${isSynced}, color=${isSynced ? "#007AFF" : "#6c757d"}`);
-        return isSynced ? "#007AFF" : "#6c757d"; // Blue if synced, gray if not
+        return isSynced ? "#007AFF" : "#6c757d";
       }
-      // Default colors for normal usage (HomeScreen)
       return "#212121";
     };
 
@@ -67,11 +62,42 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
   }, [syncedTires]);
 
   const getVehicleImage = () => {
+    if (vehicleType === 'towable') {
+      return require('../../../assets/images/trailer.png');
+    }
     return require('../../../assets/images/ford-ranger-topdown.png');
   };
 
+  if (axleType) {
+    const axleTireData: {[key: string]: AxleTireData} = {};
+    if (dynamicTireData) {
+      Object.keys(dynamicTireData).forEach(key => {
+        axleTireData[key] = {
+          psi: dynamicTireData[key].psi,
+          temp: dynamicTireData[key].temp
+        };  
+      });
+    }
+
+    return (
+      <AxleTopDownView
+        axleType={axleType}
+        tireData={axleTireData}
+        onTirePress={onTirePress}
+        syncedTires={syncedTires}
+        vehicleType={
+          vehicleType === "towing_vehicles" ||
+          vehicleType === "travel_trailer" ||
+          vehicleType === "fifth_wheel"
+            ? undefined
+            : vehicleType
+        }
+        style={style}
+      />
+    );
+  }
+
   useEffect(() => {
-    // Only apply pressure-based colors if NOT in sync modal context
     if (frontLeft && frontRight && rearLeft && rearRight && !syncedTires) {
       const calcColor = (tire: TireData) => {
         if (tire.psi < 28 || tire.temp > 160) return "red";

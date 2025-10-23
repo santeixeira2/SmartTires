@@ -2,11 +2,50 @@ import React, { useEffect } from 'react';
 import { CarPlay, ListTemplate, MapTemplate, MapTemplateConfig, TabBarTemplate } from "react-native-carplay";
 import uuid from 'react-native-uuid';
 import { View, Image } from 'react-native';
+import { useAppStore } from '../../store/AppStore';
+
+// Helper function to get tire count from axle type
+const getTireCountFromAxle = (axleType: string): number => {
+  const axleMap: {[key: string]: number} = {
+    '1 Axle': 2,
+    '2 Axles': 4,
+    '3 Axles': 6,
+    '4 Axles': 8,
+    '5 Axles': 10,
+    '6 Axles': 12,
+  };
+  return axleMap[axleType] || 4;
+};
 
 const CarPlayScreen: React.FC = () => {
+  const { state } = useAppStore();
+
   useEffect(() => {
     CarPlay.registerOnConnect(() => {
       console.log("CarPlay connected");
+
+      // Get current vehicle data from store
+      const currentVehicle = state.vehiclesData?.find(v => v.id === state.selectedVehicleId) || state.vehiclesData?.[0];
+      const vehicleName = currentVehicle?.name || 'Unknown Vehicle';
+      const axleType = currentVehicle?.axleType || '2 Axles';
+      
+      const tireCount = getTireCountFromAxle(axleType);
+      const tireItems = [];
+      
+      // Generate tire data similar to DetailedStatusScreen
+      for (let i = 0; i < tireCount; i++) {
+        const pressure = 30 + Math.random() * 5; // Random pressure between 30-35
+        const temperature = 20 + Math.random() * 10; // Random temperature between 20-30
+        const status = pressure < 28 ? 'Low Pressure' : pressure > 35 ? 'High Pressure' : 'Normal';
+        const position = i < tireCount / 2 ? 'Front' : 'Rear';
+        const side = i % 2 === 0 ? 'Left' : 'Right';
+        
+        tireItems.push({
+          id: `tire-${i}`,
+          text: `${position} ${side}`,
+          detailText: `${pressure.toFixed(1)} PSI • ${temperature.toFixed(1)}°C • ${status}`
+        });
+      }
 
       // Create Smart Tire Overview template
       const smartTireTemplate = new ListTemplate({
@@ -20,35 +59,14 @@ const CarPlayScreen: React.FC = () => {
             items: [
               { 
                 id: "vehicle-info", 
-                text: "Ford Ranger", 
-                detailText: "Connected • 2 Axle"
+                text: vehicleName, 
+                detailText: `Connected • ${axleType} • ${tireCount} Tires`
               }
             ]
           },
           {
             header: "Tire Status",
-            items: [
-              { 
-                id: "front-left", 
-                text: "Front Left", 
-                detailText: "32 PSI • 25°C • Normal"
-              },
-              { 
-                id: "front-right", 
-                text: "Front Right", 
-                detailText: "31 PSI • 26°C • Normal"
-              },
-              { 
-                id: "rear-left", 
-                text: "Rear Left", 
-                detailText: "28 PSI • 30°C • Low Pressure"
-              },
-              { 
-                id: "rear-right", 
-                text: "Rear Right", 
-                detailText: "29 PSI • 28°C • Normal"
-              }
-            ]
+            items: tireItems
           },
           {
             header: "Quick Actions",
@@ -95,10 +113,15 @@ const CarPlayScreen: React.FC = () => {
               CarPlay.pushTemplate(createTireOverviewTemplate());
               break;
             case 'detailed-view':
-              CarPlay.pushTemplate(createDetailedStatusTemplate());
+              CarPlay.pushTemplate(
+                createDetailedStatusTemplate(
+                  state.vehiclesData || [],
+                  state.selectedVehicleId ?? undefined // Fixes possible null assignment
+                )
+              );
               break;
             case 'vehicle-list':
-              CarPlay.pushTemplate(createVehicleListTemplate());
+              CarPlay.pushTemplate(createVehicleListTemplate(state.vehiclesData || []));
               break;
             case 'settings':
               CarPlay.pushTemplate(createSettingsTemplate());
@@ -231,69 +254,61 @@ const createTireOverviewTemplate = () =>
     }
   });
 
-const createDetailedStatusTemplate = () =>
-  new ListTemplate({
+const createDetailedStatusTemplate = (vehiclesData: any[], selectedVehicleId?: string) => {
+  const currentVehicle = vehiclesData.find(v => v.id === selectedVehicleId) || vehiclesData[0];
+  const tireCount = getTireCountFromAxle(currentVehicle?.axleType || '2 Axles');
+  
+  const tireItems = [];
+  for (let i = 0; i < tireCount; i++) {
+    const pressure = 30 + Math.random() * 5;
+    const temperature = 20 + Math.random() * 10;
+    const status = pressure < 28 ? 'Low Pressure' : pressure > 35 ? 'High Pressure' : 'Normal';
+    const position = i < tireCount / 2 ? 'Front' : 'Rear';
+    const side = i % 2 === 0 ? 'Left' : 'Right';
+    
+    tireItems.push({
+      id: `tire-detail-${i}`,
+      text: `${position} ${side} Tire`,
+      detailText: `${pressure.toFixed(1)} PSI • ${temperature.toFixed(1)}°C • ${status} • Connected`
+    });
+  }
+
+  return new ListTemplate({
     id: uuid.v4(),
     title: 'Detailed Status',
     sections: [
       {
         header: 'Tire Details',
-        items: [
-          { 
-            id: "front-left-detail", 
-            text: "Front Left Tire", 
-            detailText: "32 PSI • 25°C • Normal • Connected"
-          },
-          { 
-            id: "front-right-detail", 
-            text: "Front Right Tire", 
-            detailText: "31 PSI • 26°C • Normal • Connected"
-          },
-          { 
-            id: "rear-left-detail", 
-            text: "Rear Left Tire", 
-            detailText: "28 PSI • 30°C • Low Pressure • Connected"
-          },
-          { 
-            id: "rear-right-detail", 
-            text: "Rear Right Tire", 
-            detailText: "29 PSI • 28°C • Normal • Connected"
-          }
-        ]
+        items: tireItems
       }
     ],
     onItemSelect: async ({ templateId, index }) => {
       console.log(`Selected detailed tire at index: ${index}`);
     }
   });
+};
 
-const createVehicleListTemplate = () =>
-  new ListTemplate({
+const createVehicleListTemplate = (vehiclesData: any[]) => {
+  const vehicleItems = vehiclesData.map(vehicle => {
+    const tireCount = getTireCountFromAxle(vehicle.axleType);
+    return {
+      id: vehicle.id,
+      text: vehicle.name,
+      detailText: `Connected • ${vehicle.axleType} • ${tireCount} Tires`
+    };
+  });
+
+  return new ListTemplate({
     id: uuid.v4(),
     title: 'My Vehicles',
     sections: [
       {
         header: 'Connected Vehicles',
-        items: [
+        items: vehicleItems.length > 0 ? vehicleItems : [
           { 
-            id: "ford-ranger", 
-            text: "Ford Ranger", 
-            detailText: "Connected • 2 Axle • 4 Tires"
-          },
-          { 
-            id: "travel-trailer", 
-            text: "Travel Trailer", 
-            detailText: "Disconnected • 3 Axle • 6 Tires"
-          },
-          { 
-            id: "ford-f150", 
-            text: "Ford F-150", 
-            detailText: "Connected • 2 Axle • 4 Tires"
-          },
-          { 
-            id: "fifth-wheel", 
-            text: "Fifth Wheel", 
-            detailText: "Connected • 4 Axle • 8 Tires"
+            id: "no-vehicles", 
+            text: "No Vehicles", 
+            detailText: "Register vehicles to see them here"
           }
         ]
       }
@@ -303,6 +318,7 @@ const createVehicleListTemplate = () =>
       // Could switch to that vehicle's tire status
     }
   });
+};
 
 const createSettingsTemplate = () =>
   new ListTemplate({

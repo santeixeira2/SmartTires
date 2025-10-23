@@ -4,7 +4,8 @@ import RegisterUser from './RegisterUser';
 import RegisterSetup from './RegisterSetup';
 import RegisterSummary from './RegisterSummary';
 import RegisterSyncSensor from './RegisterSyncSensor';
-import { useAppActions, RegistrationData } from '../../store/AppStore';
+import { useAppActions } from '../../store/AppStore';
+import { RegistrationData } from '../../store/AppStore';
 
 interface RegisterFormMultiStepProps {
   onSubmit: (data: {
@@ -112,6 +113,86 @@ const RegisterFormMultiStep: React.FC<RegisterFormMultiStepProps> = ({
     setCurrentStep(4);
   };
 
+  // Generate tire data based on axle type
+  const generateTireDataForAxle = (axleType: string) => {
+    switch (axleType) {
+      case '1 Axle':
+        return {
+          'left': { psi: 30 + Math.random() * 5, temp: 20 + Math.random() * 10 },
+          'right': { psi: 30 + Math.random() * 5, temp: 20 + Math.random() * 10 }
+        };
+        
+      case '2 Axles':
+        return {
+          'front-left': { psi: 32 + Math.random() * 3, temp: 22 + Math.random() * 8 },
+          'front-right': { psi: 31 + Math.random() * 3, temp: 23 + Math.random() * 8 },
+          'rear-left': { psi: 28 + Math.random() * 3, temp: 25 + Math.random() * 8 },
+          'rear-right': { psi: 29 + Math.random() * 3, temp: 24 + Math.random() * 8 }
+        };
+        
+      case '3 Axles':
+        return {
+          'front-left': { psi: 32 + Math.random() * 3, temp: 22 + Math.random() * 8 },
+          'front-right': { psi: 31 + Math.random() * 3, temp: 23 + Math.random() * 8 },
+          'middle-left': { psi: 30 + Math.random() * 3, temp: 24 + Math.random() * 8 },
+          'middle-right': { psi: 29 + Math.random() * 3, temp: 25 + Math.random() * 8 },
+          'rear-left': { psi: 28 + Math.random() * 3, temp: 26 + Math.random() * 8 },
+          'rear-right': { psi: 27 + Math.random() * 3, temp: 27 + Math.random() * 8 }
+        };
+        
+      case '4 Axles':
+        return {
+          'front-left': { psi: 32 + Math.random() * 3, temp: 22 + Math.random() * 8 },
+          'front-right': { psi: 31 + Math.random() * 3, temp: 23 + Math.random() * 8 },
+          'front-middle-left': { psi: 30 + Math.random() * 3, temp: 24 + Math.random() * 8 },
+          'front-middle-right': { psi: 29 + Math.random() * 3, temp: 25 + Math.random() * 8 },
+          'rear-middle-left': { psi: 28 + Math.random() * 3, temp: 26 + Math.random() * 8 },
+          'rear-middle-right': { psi: 27 + Math.random() * 3, temp: 27 + Math.random() * 8 },
+          'rear-left': { psi: 26 + Math.random() * 3, temp: 28 + Math.random() * 8 },
+          'rear-right': { psi: 25 + Math.random() * 3, temp: 29 + Math.random() * 8 }
+        };
+        
+      case '5 Axles':
+        return {
+          'front-left': { psi: 32 + Math.random() * 3, temp: 22 + Math.random() * 8 },
+          'front-right': { psi: 31 + Math.random() * 3, temp: 23 + Math.random() * 8 },
+          'axle2-left': { psi: 30 + Math.random() * 3, temp: 24 + Math.random() * 8 },
+          'axle2-right': { psi: 29 + Math.random() * 3, temp: 25 + Math.random() * 8 },
+          'axle3-left': { psi: 28 + Math.random() * 3, temp: 26 + Math.random() * 8 },
+          'axle3-right': { psi: 27 + Math.random() * 3, temp: 27 + Math.random() * 8 },
+          'axle4-left': { psi: 26 + Math.random() * 3, temp: 28 + Math.random() * 8 },
+          'axle4-right': { psi: 25 + Math.random() * 3, temp: 29 + Math.random() * 8 },
+          'rear-left': { psi: 24 + Math.random() * 3, temp: 30 + Math.random() * 8 },
+          'rear-right': { psi: 23 + Math.random() * 3, temp: 31 + Math.random() * 8 }
+        };
+        
+      case '6 Axles':
+        return {
+          'front-left': { psi: 32 + Math.random() * 3, temp: 22 + Math.random() * 8 },
+          'front-right': { psi: 31 + Math.random() * 3, temp: 23 + Math.random() * 8 },
+          'axle2-left': { psi: 30 + Math.random() * 3, temp: 24 + Math.random() * 8 },
+          'axle2-right': { psi: 29 + Math.random() * 3, temp: 25 + Math.random() * 8 },
+          'axle3-left': { psi: 28 + Math.random() * 3, temp: 26 + Math.random() * 8 },
+          'axle3-right': { psi: 27 + Math.random() * 3, temp: 27 + Math.random() * 8 },
+          'axle4-left': { psi: 26 + Math.random() * 3, temp: 28 + Math.random() * 8 },
+          'axle4-right': { psi: 25 + Math.random() * 3, temp: 29 + Math.random() * 8 },
+          'axle5-left': { psi: 24 + Math.random() * 3, temp: 30 + Math.random() * 8 },
+          'axle5-right': { psi: 23 + Math.random() * 3, temp: 31 + Math.random() * 8 },
+          'rear-left': { psi: 22 + Math.random() * 3, temp: 32 + Math.random() * 8 },
+          'rear-right': { psi: 21 + Math.random() * 3, temp: 33 + Math.random() * 8 }
+        };
+        
+      default:
+        // Fallback to 2 axles
+        return {
+          'front-left': { psi: 32, temp: 25 },
+          'front-right': { psi: 31, temp: 26 },
+          'rear-left': { psi: 28, temp: 30 },
+          'rear-right': { psi: 29, temp: 28 }
+        };
+    }
+  };
+
   const handleSyncComplete = () => {
     if (!userData || !setupData) {
       console.error('User data or setup data is missing');
@@ -135,7 +216,7 @@ const RegisterFormMultiStep: React.FC<RegisterFormMultiStepProps> = ({
         name: setupData.vehicleName || 'Unknown Vehicle',
         type: setupData.towingType || 'Unknown Type',
         axleType: setupData.axleTowingType || 'Unknown Axle',
-        role: setupData.role,
+        role: 'power_unit', // Main vehicle is always a power unit
       },
       towables: setupData.towables || [],
       syncedVehicles: syncedVehicles,
@@ -170,37 +251,29 @@ const RegisterFormMultiStep: React.FC<RegisterFormMultiStepProps> = ({
       id: 'main-vehicle',
       name: registrationData.vehicle.name,
       towingType: registrationData.vehicle.role === 'power_unit' ? 'towing' : 'towable',
+      role: registrationData.vehicle.role, // Add the role property
       axleType: registrationData.vehicle.axleType,
       connectionStatus: 'connected',
       imageUrl: 'map.png',
       tireCount: 4, // Default for main vehicle
       synced: registrationData.syncStatus.allSynced,
-      tireData: {
-        frontLeft: { psi: 32, temp: 25 },
-        frontRight: { psi: 31, temp: 26 },
-        rearLeft: { psi: 28, temp: 30 },
-        rearRight: { psi: 29, temp: 28 },
-      }
+      tireData: generateTireDataForAxle(registrationData.vehicle.axleType)
     });
 
     // Add towables
     if (registrationData.towables && registrationData.towables.length > 0) {
-      registrationData.towables.forEach((towable) => {
+      registrationData.towables.forEach((towable: any) => {
         vehicles.push({
           id: towable.id,
           name: towable.name,
           towingType: 'towable',
+          role: 'towable', // Add the role property for towables
           axleType: towable.axle,
           connectionStatus: 'connected',
           imageUrl: 'map.png',
           tireCount: towable.tireCount,
           synced: registrationData.syncedVehicles[towable.id] || false,
-          tireData: {
-            frontLeft: { psi: 30, temp: 24 },
-            frontRight: { psi: 29, temp: 25 },
-            rearLeft: { psi: 27, temp: 29 },
-            rearRight: { psi: 28, temp: 27 },
-          }
+          tireData: generateTireDataForAxle(towable.axle)
         });
       });
     }

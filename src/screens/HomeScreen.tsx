@@ -68,11 +68,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ frontLeft, frontRight, rearLeft
               </View>
               <View style={styles.svgContainer}>
                 <TruckTopDownView 
-                  frontLeft={vehicle.tireData?.frontLeft || { psi: 32, temp: 25 }}
-                  frontRight={vehicle.tireData?.frontRight || { psi: 31, temp: 26 }}
-                  rearLeft={vehicle.tireData?.rearLeft || { psi: 28, temp: 30 }}
-                  rearRight={vehicle.tireData?.rearRight || { psi: 29, temp: 28 }}
+                  axleType={vehicle.axleType as '1 Axle' | '2 Axles' | '3 Axles' | '4 Axles' | '5 Axles' | '6 Axles'}
+                  dynamicTireData={vehicle.tireData}
                   onTirePress={(tireId) => handleTirePress(tireId, vehicle.name)}
+                  vehicleType={vehicle.role === 'power_unit' ? 'power_unit' : 'towable'}
                 />
               </View>
             </View>

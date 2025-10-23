@@ -85,9 +85,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
             <Ionicons name="person" size={24} color="#007bff" />
           </View>
           <View style={styles.userDetails}>
-            <Text style={styles.userName}>{user?.name || 'User'}</Text>
-            <Text style={styles.userEmail}>{user?.email || 'user@example.com'}</Text>
-            <Text style={styles.userRole}>{user?.role || 'Driver'}</Text>
+            <Text style={styles.userName}>
+              {state.registrationData?.user.name || user?.name || 'User'}
+            </Text>
+            <Text style={styles.userEmail}>
+              {state.registrationData?.user.email || user?.email || 'user@example.com'}
+            </Text>
+            <Text style={styles.userRole}>
+              User
+            </Text>
           </View>
         </View>
         <TouchableOpacity style={styles.settingItem} onPress={handleLogout}>
@@ -202,14 +208,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
       </View> */}
 
       {/* Registration Data Section */}
-      {state.registrationData && (
+      {state.registrationData ? (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Registration Data</Text>
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>User</Text>
+              <Text style={styles.settingLabel}>Registration Date</Text>
               <Text style={styles.settingDescription}>
-                {state.registrationData.user.name} ({state.registrationData.user.email})
+                {new Date(state.registrationData.user.registrationDate).toLocaleDateString()}
               </Text>
             </View>
           </View>
@@ -217,15 +223,37 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
             <View style={styles.settingInfo}>
               <Text style={styles.settingLabel}>Main Vehicle</Text>
               <Text style={styles.settingDescription}>
-                {state.registrationData.vehicle.name} ({state.registrationData.vehicle.axleType})
+                {state.registrationData.vehicle.name} • {state.registrationData.vehicle.axleType}
               </Text>
             </View>
           </View>
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Vehicles Registered</Text>
+              <Text style={styles.settingLabel}>Fleet Status</Text>
               <Text style={styles.settingDescription}>
-                {state.vehiclesData.length} vehicle(s) • {state.registrationData.syncStatus.syncedCount} synced
+                {state.vehiclesData.length} vehicle(s) registered • {state.registrationData.syncStatus.syncedCount} synced
+              </Text>
+            </View>
+          </View>
+          {state.registrationData.towables && state.registrationData.towables.length > 0 && (
+            <View style={styles.settingItem}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>Towables</Text>
+                <Text style={styles.settingDescription}>
+                  {state.registrationData.towables.length} towable(s) configured
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
+      ) : (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Registration Data</Text>
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>No Registration Data</Text>
+              <Text style={styles.settingDescription}>
+                Complete the registration process to see your data here
               </Text>
             </View>
           </View>

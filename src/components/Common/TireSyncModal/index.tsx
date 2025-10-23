@@ -18,6 +18,8 @@ interface TireSyncModalProps {
   onTireSync: (tireId: string, sensorId: string) => void;
   onVehicleSyncComplete: (sensorIds: {[key: string]: string}) => void;
   vehicleName: string;
+  vehicleType?: 'power_unit' | 'towable';
+  axleType?: string;
 }
 
 const TireSyncModal: React.FC<TireSyncModalProps> = ({
@@ -26,12 +28,38 @@ const TireSyncModal: React.FC<TireSyncModalProps> = ({
   onTireSync,
   onVehicleSyncComplete,
   vehicleName,
+  vehicleType = 'power_unit',
+  axleType = '2 Axles',
 }) => {
   const [selectedTire, setSelectedTire] = useState<string | null>(null);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualSensorId, setManualSensorId] = useState('');
   const [syncedTires, setSyncedTires] = useState<{[key: string]: string}>({});
+  
+  // Get expected tire count based on axle type
+  const getExpectedTireCount = () => {
+    switch (axleType) {
+      case '1 Axle':
+        return 2; // 1 axle = 2 tires
+      case '2 Axles':
+        return 4; // 2 axles = 4 tires
+      case '2 Axles w/Dually':
+        return 6; // 2 axles w/dually = 6 tires
+      case '3 Axles':
+        return 6; // 3 axles = 6 tires
+      case '4 Axles':
+        return 8; // 4 axles = 8 tires
+      case '5 Axles':
+        return 10; // 5 axles = 10 tires
+      case '6 Axles':
+        return 12; // 6 axles = 12 tires
+      default:
+        return 4; // Default to 4 tires
+    }
+  };
+
+  const expectedTireCount = getExpectedTireCount();
   
   // Reset synced tires when modal opens
   React.useEffect(() => {
@@ -151,6 +179,9 @@ const TireSyncModal: React.FC<TireSyncModalProps> = ({
                   onTirePress={handleTirePress}
                   // Pass synced state for visual indicators
                   syncedTires={syncedTires}
+                  // Pass vehicle type and axle type for correct image and tire layout
+                  vehicleType={vehicleType}
+                  axleType={axleType as '1 Axle' | '2 Axles' | '2 Axles w/Dually' | '3 Axles' | '4 Axles' | '5 Axles' | '6 Axles'}
                 />
               </View>
               
@@ -168,18 +199,18 @@ const TireSyncModal: React.FC<TireSyncModalProps> = ({
                   ))}
                   
                   {/* Complete Sync Button */}
-                  {Object.keys(syncedTires).length === 4 && (
+                  {Object.keys(syncedTires).length === expectedTireCount && (
                     <TouchableOpacity
                       style={styles.completeSyncButton}
                       onPress={() => {
-                        console.log('✅ All 4 tires synced! Vehicle sync complete.');
+                        console.log(`✅ All ${expectedTireCount} tires synced! Vehicle sync complete.`);
                         console.log('📊 Sensor IDs saved:', syncedTires);
                         onVehicleSyncComplete(syncedTires);
                       }}
                     >
                       <Icon name="checkmark-circle" size={24} color="#fff" />
                       <Text style={styles.completeSyncButtonText}>
-                        Complete Vehicle Sync ({Object.keys(syncedTires).length}/4)
+                        Complete Vehicle Sync ({Object.keys(syncedTires).length}/{expectedTireCount})
                       </Text>
                     </TouchableOpacity>
                   )}

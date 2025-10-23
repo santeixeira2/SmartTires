@@ -10,9 +10,10 @@ interface DetailedStatusScreenProps {
   focusedTire?: string;
   vehicleName?: string;
   vehiclesData?: VehicleData[];
+  onNavigateToTireDetail?: (tireId: string, vehicleName: string) => void;
 }
 
-const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire, vehicleName, vehiclesData: propVehiclesData }) => {
+const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire, vehicleName, vehiclesData: propVehiclesData, onNavigateToTireDetail }) => {
   const { state } = useAppStore();
   const { setSelectedVehicle } = useAppActions();
   // Calculate tire count based on axle type
@@ -175,6 +176,11 @@ const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire
                 borderColor: '#007bff',
                 backgroundColor: '#f8f9ff'
               } : undefined}
+              onPress={() => {
+                const currentVehicle = vehicles.find(v => v.id === state.selectedVehicleId);
+                const actualVehicleName = currentVehicle?.name || vehicleName || 'Unknown Vehicle';
+                onNavigateToTireDetail?.(tire.id.toString(), actualVehicleName);
+              }}
             />
           );
         })}

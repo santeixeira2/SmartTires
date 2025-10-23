@@ -17,6 +17,7 @@ import LoadingScreen from "./src/screens/LoadingScreen";
 import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 import DetailedStatusScreen from "./src/screens/DetailedStatusScreen";
+import TireDetailScreen from "./src/screens/TireDetailScreen";
 import ForgotPasswordScreen from "./src/screens/ForgotPasswordScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import Navbar from "./src/components/Common/Navbar";
@@ -26,7 +27,7 @@ import CarPlayScreen from "./src/screens/CarPlayScreen";
 import { AppProvider, useAppStore, useAppActions } from "./src/store/AppStore";
 import vehiclesData from "./src/data/vehicles.json";
 
-type Screen = 'home' | 'detailed' | 'devices' | 'settings';
+type Screen = 'home' | 'detailed' | 'tire-detail' | 'devices' | 'settings';
 type AuthScreen = 'login' | 'register' | 'forgot-password';
 
 const AppContent: FC = () => {
@@ -40,21 +41,21 @@ const AppContent: FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
-  const [tireData] = useState([
-    { psi: 32, temp: 25 },
-    { psi: 31, temp: 26 },
-    { psi: 28, temp: 30 },
-    { psi: 29, temp: 28 },
-  ]);
+  // Remove hardcoded tireData - HomeScreen will load from store
   
   const [focusedTire, setFocusedTire] = useState<{tireId: string, vehicleName: string} | null>(null);
+  const [tireDetailData, setTireDetailData] = useState<{tireId: string, vehicleName: string} | null>(null);
 
-  // Initialize app with default vehicles data
+  // Initialize app with default vehicles data only if no user data exists
   useEffect(() => {
-    console.log('✅ App initialized - using in-memory store');
-    setVehiclesData(vehiclesData as any[]);
-    console.log('✅ Vehicles data loaded:', vehiclesData);
-  }, []); // Empty dependency array - only run once on mount
+    console.log('✅ App initialized - checking for user data');
+    if (state.vehiclesData.length === 0) {
+      console.log('No user data found, loading default vehicles');
+      setVehiclesData(vehiclesData as any[]);
+    } else {
+      console.log('User data found, using registered vehicles:', state.vehiclesData);
+    }
+  }, [state.vehiclesData.length]); // Only run when vehiclesData changes
 
   // Handle logout
   const handleLogout = () => {
@@ -74,6 +75,19 @@ const AppContent: FC = () => {
     console.log(`🔥 App.tsx - Tire navigation: ${tireId} on ${vehicleName}`);
     setFocusedTire({ tireId, vehicleName });
     setCurrentScreen('detailed');
+  };
+
+  // Handle tire detail navigation
+  const handleTireDetailNavigation = (tireId: string, vehicleName: string) => {
+    console.log(`🔥 App.tsx - Tire detail navigation: ${tireId} on ${vehicleName}`);
+    setTireDetailData({ tireId, vehicleName });
+    setCurrentScreen('tire-detail');
+  };
+
+  // Handle back from tire detail
+  const handleBackFromTireDetail = () => {
+    setCurrentScreen('detailed');
+    setTireDetailData(null);
   };
 
   // Initialize CarPlay screen
@@ -166,10 +180,6 @@ const AppContent: FC = () => {
       case 'home':
         return (
           <HomeScreen 
-            frontLeft={tireData[0]} 
-            frontRight={tireData[1]} 
-            rearLeft={tireData[2]} 
-            rearRight={tireData[3]} 
             onNavigateToDetailed={handleTireNavigation}
           />
         );
@@ -179,6 +189,15 @@ const AppContent: FC = () => {
             focusedTire={focusedTire?.tireId}
             vehicleName={focusedTire?.vehicleName}
             vehiclesData={state.vehiclesData}
+            onNavigateToTireDetail={handleTireDetailNavigation}
+          />
+        );
+      case 'tire-detail':
+        return (
+          <TireDetailScreen 
+            tireId={tireDetailData?.tireId || ''}
+            vehicleName={tireDetailData?.vehicleName || ''}
+            onBack={handleBackFromTireDetail}
           />
         );
       case 'devices':
@@ -188,10 +207,6 @@ const AppContent: FC = () => {
       default:
         return (
           <HomeScreen 
-            frontLeft={tireData[0]} 
-            frontRight={tireData[1]} 
-            rearLeft={tireData[2]} 
-            rearRight={tireData[3]} 
             onNavigateToDetailed={handleTireNavigation}
           />
         );
@@ -211,7 +226,7 @@ const AppContent: FC = () => {
       </View>
 
       {/* Custom Navbar */}
-      <Navbar currentScreen={currentScreen} onScreenChange={setCurrentScreen} />
+      <Navbar currentScreen={currentScreen as any} onScreenChange={setCurrentScreen as any} />
     </SafeAreaView>
   );
 };

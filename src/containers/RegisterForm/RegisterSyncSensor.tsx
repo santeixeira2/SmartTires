@@ -112,10 +112,11 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
     setSyncedVehicles(updatedSyncedVehicles);
     
     // Save sensor IDs for this vehicle
-    setVehicleSensorIds(prev => ({
-      ...prev,
+    const updatedVehicleSensorIds = {
+      ...vehicleSensorIds,
       [vehicleId]: sensorIds
-    }));
+    };
+    setVehicleSensorIds(updatedVehicleSensorIds);
     
     // Update parent component
     if (onSyncedVehiclesUpdate) {
@@ -124,7 +125,7 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
     
     // Update parent with sensor IDs
     if (onVehicleSensorIdsUpdate) {
-      onVehicleSensorIdsUpdate(vehicleSensorIds);
+      onVehicleSensorIdsUpdate(updatedVehicleSensorIds);
     }
     
     setShowTireSyncModal(false);
@@ -243,6 +244,27 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
     }
   };
 
+  // Check if all vehicles are synced
+  const areAllVehiclesSynced = () => {
+    if (!syncedVehicles || Object.keys(syncedVehicles).length === 0) {
+      return false;
+    }
+    return Object.values(syncedVehicles).every(Boolean);
+  };
+
+  // Handle complete registration with validation
+  const handleCompleteRegistration = () => {
+    if (!areAllVehiclesSynced()) {
+      Alert.alert(
+        "Sync Required",
+        "Please sync all vehicles before completing registration. All vehicles must have all their tires synced.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+    onComplete();
+  };
+
   const renderModalFooter = (isManualSync = false) => (
     <View style={styles.modalFooter}>
       <TouchableOpacity
@@ -286,9 +308,9 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
         progressPercentage={75}
         progressText="Sync Sensors"
         footerButton={{
-          label: "Complete Registration",
-          onPress: onComplete,
-          disabled: isLoading,
+          label: areAllVehiclesSynced() ? "Complete Registration" : "Sync All Vehicles First",
+          onPress: handleCompleteRegistration,
+          disabled: isLoading || !areAllVehiclesSynced(),
         }}
         isLoading={isLoading}
       >
@@ -302,6 +324,27 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
             3. Ensure all sensors are properly connected{"\n"}
             4. Complete sync for all vehicles
           </Text>
+        </View>
+
+        {/* Sync Status Section */}
+        <View style={styles.syncStatusContainer}>
+          <Text style={styles.syncStatusTitle}>Sync Status</Text>
+          <View style={styles.syncStatusRow}>
+            <Text style={styles.syncStatusLabel}>Vehicles Synced:</Text>
+            <Text style={styles.syncStatusValue}>
+              {Object.values(syncedVehicles || {}).filter(Boolean).length} / {Object.keys(syncedVehicles || {}).length}
+            </Text>
+          </View>
+          {!areAllVehiclesSynced() && (
+            <Text style={styles.syncStatusWarning}>
+              ⚠️ All vehicles must be synced before completing registration
+            </Text>
+          )}
+          {areAllVehiclesSynced() && (
+            <Text style={styles.syncStatusSuccess}>
+              ✅ All vehicles synced! You can now complete registration.
+            </Text>
+          )}
         </View>
 
         <View style={styles.summarySection}>
@@ -381,8 +424,17 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
         visible={showTireSyncModal}
         onClose={() => setShowTireSyncModal(false)}
         onTireSync={handleTireSync}
-        onVehicleSyncComplete={(sensorIds) => handleVehicleSyncComplete(selectedVehicle || '', sensorIds)}
+        onVehicleSyncComplete={(sensorIds: {[key: string]: string}) => handleVehicleSyncComplete(selectedVehicle || '', sensorIds as {[key: string]: string})}
         vehicleName={selectedVehicle || 'Unknown Vehicle'}
+        vehicleType={selectedVehicle === 'main-vehicle' ? 'power_unit' : 'towable'}
+        axleType={(() => {
+          const axle = selectedVehicle === 'main-vehicle' ? setupData.axleTowingType : 
+            setupData.towables?.find(t => t.id === selectedVehicle)?.axle || '2 Axles';
+          console.log('🔧 RegisterSyncSensor - selectedVehicle:', selectedVehicle);
+          console.log('🔧 RegisterSyncSensor - axleType being passed:', axle);
+          console.log('🔧 RegisterSyncSensor - setupData.towables:', setupData.towables);
+          return axle;
+        })()}
       />
 
     </>
@@ -437,6 +489,45 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     marginBottom: 16,
+  },
+  syncStatusContainer: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#dee2e6",
+  },
+  syncStatusTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#495057",
+    marginBottom: 12,
+  },
+  syncStatusRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  syncStatusLabel: {
+    fontSize: 14,
+    color: "#6c757d",
+  },
+  syncStatusValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#007bff",
+  },
+  syncStatusWarning: {
+    fontSize: 12,
+    color: "#dc3545",
+    fontStyle: "italic",
+  },
+  syncStatusSuccess: {
+    fontSize: 12,
+    color: "#28a745",
+    fontWeight: "600",
   },
   instructionsTitle: {
     fontSize: 16,

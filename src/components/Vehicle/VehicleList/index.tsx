@@ -6,6 +6,7 @@ import {
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import styles from "./styles";
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 
 export interface Vehicle {
   id: string;
@@ -48,8 +49,8 @@ const VehicleList: React.FC<VehicleListProps> = ({
         >
           <View style={styles.vehicleHeader}>
             <View style={styles.vehicleIcon}>
-              <Ionicons 
-                name={vehicle.isMain ? "car-outline" : "car-sport-outline"} 
+              <MaterialCommunityIcons 
+                name={vehicle.isMain ? "car-outline" : "truck-outline"} 
                 size={24} 
                 color="#007bff" 
               />
