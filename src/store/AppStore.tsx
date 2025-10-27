@@ -40,6 +40,8 @@ export interface AppState {
   vehiclesData: any[];
   selectedVehicleId: string | null;
   isLoading: boolean;
+  isDarkMode: boolean;
+  units: 'imperial' | 'metric';
 }
 
 type AppAction =
@@ -49,7 +51,9 @@ type AppAction =
   | { type: 'SET_SELECTED_VEHICLE'; payload: string | null }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'CLEAR_ALL_DATA' }
-  | { type: 'UPDATE_SYNCED_VEHICLES'; payload: {[key: string]: boolean} };
+  | { type: 'UPDATE_SYNCED_VEHICLES'; payload: {[key: string]: boolean} }
+  | { type: 'SET_DARK_MODE'; payload: boolean }
+  | { type: 'SET_UNITS'; payload: 'imperial' | 'metric' };
 
 const initialState: AppState = {
   registrationData: null,
@@ -57,6 +61,8 @@ const initialState: AppState = {
   vehiclesData: [],
   selectedVehicleId: null,
   isLoading: false,
+  isDarkMode: false,
+  units: 'imperial',
 };
 
 const appReducer = (state: AppState, action: AppAction): AppState => {
@@ -102,6 +108,16 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
             allSynced: Object.values(action.payload).every(Boolean),
           }
         } : null,
+      };
+    case 'SET_DARK_MODE':
+      return {
+        ...state,
+        isDarkMode: action.payload,
+      };
+    case 'SET_UNITS':
+      return {
+        ...state,
+        units: action.payload,
       };
     default:
       return state;

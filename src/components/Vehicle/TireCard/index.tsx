@@ -33,7 +33,7 @@ const TireCard: React.FC<TireCardProps> = ({ tire, style, onPress }) => {
   };
 
   const getTemperatureStatus = () => {
-    if (tire.temperature > 100) return { status: "danger", color: "#F44336" };
+    if (tire.temperature > 120) return { status: "danger", color: "#F44336" };
     if (tire.temperature > 90) return { status: "alert", color: "#FF9800" };
     return { status: "normal", color: "#000000" };
   };

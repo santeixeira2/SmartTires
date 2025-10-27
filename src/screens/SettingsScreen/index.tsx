@@ -11,11 +11,9 @@ interface SettingsScreenProps {
 }
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
-  const { state } = useAppStore();
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { state, dispatch } = useAppStore();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [autoConnect, setAutoConnect] = useState(false);
-  const [units, setUnits] = useState('imperial');
   const { user } = useAuth();
 
   const handleResetSettings = () => {
@@ -33,8 +31,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
           onPress: () => {
             setNotificationsEnabled(true);
             setAutoConnect(false);
-            setUnits('imperial');
-            setIsDarkMode(false);
+            dispatch({ type: 'SET_UNITS', payload: 'imperial' });
+            dispatch({ type: 'SET_DARK_MODE', payload: false });
             Alert.alert('Settings Reset', 'All settings have been reset to default');
           }
         }
@@ -156,10 +154,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
             </Text>
           </View>
           <Switch
-            value={isDarkMode}
-            onValueChange={setIsDarkMode}
+            value={state.isDarkMode}
+            onValueChange={(value) => dispatch({ type: 'SET_DARK_MODE', payload: value })}
             trackColor={{ false: '#767577', true: '#81b0ff' }}
-            thumbColor={isDarkMode ? '#f5dd4b' : '#f4f3f4'}
+            thumbColor={state.isDarkMode ? '#f5dd4b' : '#f4f3f4'}
           />
         </View>
       </View>
@@ -169,16 +167,16 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
         <Text style={styles.sectionTitle}>Units</Text>
         <TouchableOpacity
           style={styles.settingItem}
-          onPress={() => setUnits(units === 'imperial' ? 'metric' : 'imperial')}
+          onPress={() => dispatch({ type: 'SET_UNITS', payload: state.units === 'imperial' ? 'metric' : 'imperial' })}
         >
           <View style={styles.settingInfo}>
             <Text style={styles.settingLabel}>Measurement Units</Text>
             <Text style={styles.settingDescription}>
-              Current: {units === 'imperial' ? 'PSI / °F' : 'kPa / °C'}
+              Current: {state.units === 'imperial' ? 'PSI / °F' : 'kPa / °C'}
             </Text>
           </View>
           <Text style={styles.settingValue}>
-            {units === 'imperial' ? 'Imperial' : 'Metric'}
+            {state.units === 'imperial' ? 'Imperial' : 'Metric'}
           </Text>
         </TouchableOpacity>
       </View>

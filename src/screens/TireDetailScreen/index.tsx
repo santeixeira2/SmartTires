@@ -237,7 +237,7 @@ const TireDetailScreen: React.FC<TireDetailScreenProps> = ({ tireId, vehicleName
             <View style={styles.statusItem}>
               <Text style={styles.statusLabel}>Temperature</Text>
               <Text style={styles.statusValue}>
-                {tireData.temperature.toFixed(1)}°C
+                {((tireData.temperature * 9/5) + 32).toFixed(1)}°F
               </Text>
             </View>
           </View>
@@ -271,7 +271,7 @@ const TireDetailScreen: React.FC<TireDetailScreenProps> = ({ tireId, vehicleName
                 </View>
                 <View style={styles.historyRight}>
                   <Text style={styles.historyPressure}>{entry.pressure.toFixed(1)} PSI</Text>
-                  <Text style={styles.historyTemperature}>{entry.temperature.toFixed(1)}°C</Text>
+                  <Text style={styles.historyTemperature}>{((entry.temperature * 9/5) + 32).toFixed(1)}°F</Text>
                 </View>
               </View>
             ))}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { View, Text, StyleSheet, ScrollView, Dimensions, Alert, TouchableOpacity } from "react-native";
 import Header from "../components/Common/Header";
 import TruckTopDownView from "../components/Vehicle/TruckTopDownView";
@@ -16,10 +16,33 @@ interface HomeScreenProps {
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ frontLeft, frontRight, rearLeft, rearRight, onNavigateToDetailed }) => {
-  const { state } = useAppStore();
+  const { state, dispatch } = useAppStore();
+  const scrollViewRef = useRef<ScrollView>(null);
   
   // Use vehicles from store if available, otherwise fallback to empty array
   const vehicles = state.vehiclesData.length > 0 ? state.vehiclesData : [];
+  
+  // Set first vehicle as selected if none is selected
+  React.useEffect(() => {
+    if (vehicles.length > 0 && !state.selectedVehicleId) {
+      dispatch({ type: 'SET_SELECTED_VEHICLE', payload: vehicles[0].id });
+    }
+  }, [vehicles.length, state.selectedVehicleId, dispatch]);
+
+  // Auto-scroll to selected vehicle when it changes
+  React.useEffect(() => {
+    if (state.selectedVehicleId && vehicles.length > 0) {
+      const selectedIndex = vehicles.findIndex(v => v.id === state.selectedVehicleId);
+      if (selectedIndex !== -1 && scrollViewRef.current) {
+        // Calculate scroll position (card width + margin)
+        const scrollPosition = selectedIndex * (CARD_WIDTH + 16);
+        scrollViewRef.current.scrollTo({
+          x: scrollPosition,
+          animated: true
+        });
+      }
+    }
+  }, [state.selectedVehicleId, vehicles]);
   
   // If no vehicles, show a message
   if (vehicles.length === 0) {
@@ -52,35 +75,76 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ frontLeft, frontRight, rearLeft
 
       <View style={styles.overviewSection}>
         <ScrollView 
+          ref={scrollViewRef}
           horizontal 
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.vehiclesScrollContainer}
           snapToInterval={CARD_WIDTH + 16}
           decelerationRate="fast"
         >
-          {vehicles.map((vehicle) => (
-            <View key={vehicle.id} style={[styles.vehicleCard, { width: CARD_WIDTH }]}>
-              <View style={styles.vehicleHeader}>
-                <Text style={styles.vehicleName}>{vehicle.name}</Text>
-                <Text style={styles.vehicleSubtext}>
-                  {vehicle.towingType === 'towing' ? ('Towing').toUpperCase() : ('Towable').toUpperCase()} • {vehicle.axleType}
-                </Text>
-              </View>
-              <View style={styles.svgContainer}>
-                <TruckTopDownView 
-                  axleType={vehicle.axleType as '1 Axle' | '2 Axles' | '3 Axles' | '4 Axles' | '5 Axles' | '6 Axles'}
-                  dynamicTireData={vehicle.tireData}
-                  onTirePress={(tireId) => handleTirePress(tireId, vehicle.name)}
-                  vehicleType={vehicle.role === 'power_unit' ? 'power_unit' : 'towable'}
-                />
-              </View>
-            </View>
-          ))}
+          {vehicles.map((vehicle) => {
+            const isSelected = vehicle.id === state.selectedVehicleId;
+            return (
+              <TouchableOpacity 
+                key={vehicle.id} 
+                style={[
+                  styles.vehicleCard, 
+                  { width: CARD_WIDTH },
+                  isSelected && styles.selectedVehicleCard
+                ]}
+                onPress={() => dispatch({ type: 'SET_SELECTED_VEHICLE', payload: vehicle.id })}
+              >
+                <View style={styles.vehicleHeader}>
+                  <Text style={[styles.vehicleName, isSelected && styles.selectedVehicleName]}>
+                    {vehicle.name}
+                  </Text>
+                  <Text style={styles.vehicleSubtext}>
+                    {vehicle.towingType === 'towing' ? ('Towing').toUpperCase() : ('Towable').toUpperCase()} • {vehicle.axleType}
+                  </Text>
+                </View>
+                <View style={styles.svgContainer}>
+                  <TruckTopDownView 
+                    axleType={vehicle.axleType as '1 Axle' | '2 Axles' | '3 Axles' | '4 Axles' | '5 Axles' | '6 Axles'}
+                    dynamicTireData={vehicle.tireData}
+                    onTirePress={(tireId) => handleTirePress(tireId, vehicle.name)}
+                    vehicleType={(() => {
+                      // Fix for existing data: if it's the main vehicle (id: 'main-vehicle') or has towingType: 'towing', it's a power unit
+                      if (vehicle.id === 'main-vehicle' || vehicle.towingType === 'towing') {
+                        return 'power_unit';
+                      }
+                      return 'towable';
+                    })()}
+                  />
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       </View>
 
       <View style={styles.statusContainer}>
         <Text style={styles.sectionTitle}>Status Legend</Text>
+        
+        {/* Development: CarPlay Refresh Button */}
+        <TouchableOpacity 
+          style={styles.refreshButton}
+          onPress={() => {
+            console.log('🔄 Manual CarPlay refresh triggered');
+            // Scroll to selected vehicle
+            if (state.selectedVehicleId && scrollViewRef.current) {
+              const selectedIndex = vehicles.findIndex(v => v.id === state.selectedVehicleId);
+              if (selectedIndex !== -1) {
+                const scrollPosition = selectedIndex * (CARD_WIDTH + 16);
+                scrollViewRef.current.scrollTo({
+                  x: scrollPosition,
+                  animated: true
+                });
+              }
+            }
+          }}
+        >
+          <Text style={styles.refreshButtonText}>🔄 Refresh CarPlay</Text>
+        </TouchableOpacity>
         <View style={styles.legendContainer}>
           <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: 'green' }]} />
@@ -134,6 +198,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e9ecef',
   },
+  selectedVehicleCard: {
+    borderColor: '#007bff',
+    borderWidth: 2,
+    shadowColor: '#007bff',
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+  },
   vehicleHeader: {
     marginBottom: 10,
     paddingBottom: 10,
@@ -145,6 +217,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#212529',
     marginBottom: 4,
+  },
+  selectedVehicleName: {
+    color: '#007bff',
   },
   vehicleSubtext: {
     fontSize: 14,
@@ -205,6 +280,18 @@ const styles = StyleSheet.create({
     color: '#6c757d',
     textAlign: 'center',
     lineHeight: 24,
+  },
+  refreshButton: {
+    backgroundColor: '#007bff',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 10,
+    alignItems: 'center',
+  },
+  refreshButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

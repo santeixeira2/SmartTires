@@ -16,15 +16,11 @@ interface DetailedStatusScreenProps {
 const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire, vehicleName, vehiclesData: propVehiclesData, onNavigateToTireDetail }) => {
   const { state } = useAppStore();
   const { setSelectedVehicle } = useAppActions();
-  // Calculate tire count based on axle type
   const getTireCountFromAxle = (axleType: string): number => {
     const axleMap: {[key: string]: number} = {
       '1 Axle': 2,
       '2 Axles': 4,
       '3 Axles': 6,
-      '4 Axles': 8,
-      '5 Axles': 10,
-      '6 Axles': 12,
     };
     return axleMap[axleType] || 4; // Default to 4 if not found
   };
@@ -37,8 +33,8 @@ const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire
     for (let i = 0; i < tireCount; i++) {
       tires.push({
         id: i + 1,
-        pressure: 30 + Math.random() * 5, // Random pressure between 30-35
-        temperature: 20 + Math.random() * 10, // Random temperature between 20-30
+        pressure: 30 + Math.random() * 5, // Random pressure between 74-79
+        temperature: 68 + Math.random() * 10, // Random temperature between 68-78
         connected: true,
         deviceId: `device_${i + 1}`,
         position: `tire_${i + 1}`,
@@ -49,10 +45,10 @@ const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire
   };
 
   const [tires, setTires] = useState<TireData[]>([
-    { id: 1, pressure: 32, temperature: 25, connected: true, deviceId: '1234567890', position: 'front-left' },
-    { id: 2, pressure: 31, temperature: 26, connected: true, deviceId: '1234567890', position: 'front-right' },
-    { id: 3, pressure: 28, temperature: 30, connected: true, deviceId: '1234567890', position: 'rear-left' },
-    { id: 4, pressure: 29, temperature: 28, connected: true, deviceId: '1234567890', position: 'rear-right' },
+    { id: 1, pressure: 42, temperature: 74, connected: true, deviceId: '1234567890', position: 'front-left' },
+    { id: 2, pressure: 30, temperature: 75, connected: true, deviceId: '1234567890', position: 'front-right' },
+    { id: 3, pressure: 48, temperature: 76, connected: true, deviceId: '1234567890', position: 'rear-left' },
+    { id: 4, pressure: 30, temperature: 77, connected: true, deviceId: '1234567890', position: 'rear-right' },
   ]);
   // Use vehicles from store if available, otherwise fallback to prop or preset data
   const vehicles = state.vehiclesData.length > 0 ? state.vehiclesData : (propVehiclesData || []);
@@ -113,7 +109,7 @@ const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire
   };
 
   const handleVehicleSelect = (vehicleId: string) => {
-    console.log('🔥 DetailedStatusScreen - Vehicle selected:', vehicleId);
+    console.log('DetailedStatusScreen - Vehicle selected:', vehicleId);
     setSelectedVehicleLocal(vehicleId);
     
     // Save selected vehicle to global store
@@ -124,7 +120,7 @@ const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire
     if (selectedVehicleData) {
       const newTires = generateTiresForVehicle(selectedVehicleData);
       setTires(newTires);
-      console.log(`✅ Generated ${newTires.length} tires for ${selectedVehicleData.axleType} vehicle`);
+      console.log(`Generated ${newTires.length} tires for ${selectedVehicleData.axleType} vehicle`);
     }
   };
 

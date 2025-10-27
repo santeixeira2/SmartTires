@@ -29,7 +29,7 @@ interface RegisterSyncSensorProps {
   syncedVehicles?: {[key: string]: boolean};
   onSyncedVehiclesUpdate?: (syncedVehicles: {[key: string]: boolean}) => void;
   vehicleSensorIds?: {[key: string]: {[key: string]: string}};
-  onVehicleSensorIdsUpdate?: (vehicleSensorIds: {[key: string]: {[key: string]: string}}) => void;
+  onVehicleSensorIdsUpdate?: (vehicleSensorIds: {[key: string]: {[key: string]: string}}) => void;  
 }
 
 const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({

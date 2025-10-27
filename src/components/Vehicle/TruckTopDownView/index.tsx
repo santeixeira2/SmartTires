@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, Alert } from 'react-native';
 import styles from './TruckTopDownView.style';
 import AxleTopDownView, { AxleTireData } from './AxleTopDownView';
+import { useAppStore } from '../../../store/AppStore';
+import { formatPressure, formatTemperature } from '../../../utils/units';
 import { 
   TruckTopDownViewProps, 
   TireData, 
@@ -25,6 +27,7 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
   axleType,
   dynamicTireData
 }) => {
+  const { state } = useAppStore();
   const getTireColor = (tireId: string) => {
     if (syncedTires) {
       const isSynced = syncedTires[tireId];
@@ -147,10 +150,14 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
         <Text style={styles.tireLabel}>{tire.label}</Text>
       )}
       {showPressure && tire.pressure && (
-        <Text style={styles.tireData}>{tire.pressure} PSI</Text>
+        <Text style={styles.tireData}>
+          {formatPressure(tire.pressure, state.units)}
+        </Text>
       )}
       {showTemperature && tire.temperature && (
-        <Text style={styles.tireData}>{tire.temperature}°C</Text>
+        <Text style={styles.tireData}>
+          {formatTemperature((tire.temperature * 9/5) + 32, state.units)}
+        </Text>
       )}
     </TouchableOpacity>
   );
