@@ -19,11 +19,22 @@ const TextBox = ({
     value, 
     onChangeText, 
     icon, 
-    editable,
-    secure,
+    editable = true,
+    secure = false,
     ...rest 
 }: TextBoxProps ) => {
     const [showPassword, setShowPassword] = useState(false);
+
+    // Remove conflicting props from rest to avoid warnings/errors
+    // These props are explicitly set above, so we don't want them overridden
+    const safeRest = Object.fromEntries(
+        Object.entries(rest).filter(([key]) => 
+            !['secureTextEntry', 'autoCapitalize', 'autoCorrect', 'editable', 'returnKeyType', 'blurOnSubmit'].includes(key)
+        )
+    );
+
+    // Calculate secureTextEntry value - only true when secure is true AND password is hidden
+    const isSecureTextEntry = secure && !showPassword;
 
     return ( 
         <View style={textBoxStyles.container}>
@@ -36,13 +47,13 @@ const TextBox = ({
           placeholder={placeholder}
           value={value}
           onChangeText={onChangeText}
-          secureTextEntry={secure === true ? !showPassword : false}
+          secureTextEntry={isSecureTextEntry}
           autoCapitalize="none"
           autoCorrect={false}
-          editable={editable}
+          editable={editable !== false}
           returnKeyType="next"
           blurOnSubmit={false}
-          {...rest}
+          {...safeRest}
         />
 
         {secure && (

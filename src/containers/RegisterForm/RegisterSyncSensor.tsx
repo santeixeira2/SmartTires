@@ -425,15 +425,42 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
         onClose={() => setShowTireSyncModal(false)}
         onTireSync={handleTireSync}
         onVehicleSyncComplete={(sensorIds: {[key: string]: string}) => handleVehicleSyncComplete(selectedVehicle || '', sensorIds as {[key: string]: string})}
-        vehicleName={selectedVehicle || 'Unknown Vehicle'}
+        vehicleName={(() => {
+          if (selectedVehicle === 'main-vehicle') {
+            return setupData.vehicleName || 'Main Vehicle';
+          }
+          
+          // Extract index from towable ID (e.g., "towable-0" -> 0)
+          const towableIndexMatch = selectedVehicle?.match(/towable-(\d+)/);
+          if (towableIndexMatch && setupData.towables) {
+            const index = parseInt(towableIndexMatch[1], 10);
+            const towable = setupData.towables[index];
+            return towable?.name || `Towable ${index + 1}`;
+          }
+          
+          return 'Unknown Vehicle';
+        })()}
         vehicleType={selectedVehicle === 'main-vehicle' ? 'power_unit' : 'towable'}
         axleType={(() => {
-          const axle = selectedVehicle === 'main-vehicle' ? setupData.axleTowingType : 
-            setupData.towables?.find(t => t.id === selectedVehicle)?.axle || '2 Axles';
-          console.log('🔧 RegisterSyncSensor - selectedVehicle:', selectedVehicle);
-          console.log('🔧 RegisterSyncSensor - axleType being passed:', axle);
-          console.log('🔧 RegisterSyncSensor - setupData.towables:', setupData.towables);
-          return axle;
+          if (selectedVehicle === 'main-vehicle') {
+            return setupData.axleTowingType || '2 Axles';
+          }
+          
+          // Extract index from towable ID (e.g., "towable-0" -> 0)
+          const towableIndexMatch = selectedVehicle?.match(/towable-(\d+)/);
+          if (towableIndexMatch && setupData.towables) {
+            const index = parseInt(towableIndexMatch[1], 10);
+            const towable = setupData.towables[index];
+            const axle = towable?.axle || '2 Axles';
+            console.log('🔧 RegisterSyncSensor - selectedVehicle:', selectedVehicle);
+            console.log('🔧 RegisterSyncSensor - towableIndex:', index);
+            console.log('🔧 RegisterSyncSensor - towable:', towable);
+            console.log('🔧 RegisterSyncSensor - axleType being passed:', axle);
+            return axle;
+          }
+          
+          console.log('⚠️ RegisterSyncSensor - Could not find axle type, defaulting to 2 Axles');
+          return '2 Axles';
         })()}
       />
 

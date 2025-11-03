@@ -2,7 +2,6 @@ import { FC, useEffect, useState } from "react";
 import { NewAppScreen } from "@react-native/new-app-screen";
 import { SafeAreaView, StatusBar, StyleSheet, useColorScheme, View, LogBox } from "react-native";
 
-// Disable React Native warnings that cause yellow overlay
 LogBox.ignoreAllLogs(true);
 LogBox.ignoreLogs([
   'Warning:',
@@ -46,7 +45,6 @@ const AppContent: FC = () => {
   const [focusedTire, setFocusedTire] = useState<{tireId: string, vehicleName: string} | null>(null);
   const [tireDetailData, setTireDetailData] = useState<{tireId: string, vehicleName: string} | null>(null);
 
-  // Initialize app with default vehicles data only if no user data exists
   useEffect(() => {
     console.log('✅ App initialized - checking for user data');
     if (state.vehiclesData.length === 0) {
@@ -57,9 +55,7 @@ const AppContent: FC = () => {
     }
   }, [state.vehiclesData.length]); // Only run when vehiclesData changes
 
-  // Handle logout
   const handleLogout = () => {
-    // Clear all data from store
     clearAllData();
     console.log('✅ Store cleared on logout');
     
@@ -70,37 +66,29 @@ const AppContent: FC = () => {
     setFocusedTire(null);
   };
 
-  // Handle tire navigation
   const handleTireNavigation = (tireId: string, vehicleName: string) => {
     console.log(`🔥 App.tsx - Tire navigation: ${tireId} on ${vehicleName}`);
     setFocusedTire({ tireId, vehicleName });
     setCurrentScreen('detailed');
   };
 
-  // Handle tire detail navigation
   const handleTireDetailNavigation = (tireId: string, vehicleName: string) => {
     console.log(`🔥 App.tsx - Tire detail navigation: ${tireId} on ${vehicleName}`);
     setTireDetailData({ tireId, vehicleName });
     setCurrentScreen('tire-detail');
   };
 
-  // Handle back from tire detail
   const handleBackFromTireDetail = () => {
     setCurrentScreen('detailed');
     setTireDetailData(null);
   };
 
-  // Initialize CarPlay screen
   useEffect(() => {
-    // CarPlay functionality is now handled in CarPlayScreen component
     return () => {
-      // Cleanup if needed
     };
   }, []);
 
   console.log('App.tsx - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading, 'user:', user);
-
-  // Show loading screen while checking authentication
   if (isLoading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
@@ -216,16 +204,10 @@ const AppContent: FC = () => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-
-      {/* CarPlay Screen - Always active */}
       <CarPlayScreen />
-
-      {/* Main Content */}
       <View style={{ flex: 1 }}>
         {renderScreen()}
       </View>
-
-      {/* Custom Navbar */}
       <Navbar currentScreen={currentScreen as any} onScreenChange={setCurrentScreen as any} />
     </SafeAreaView>
   );

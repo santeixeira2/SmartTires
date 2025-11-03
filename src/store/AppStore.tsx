@@ -53,7 +53,8 @@ type AppAction =
   | { type: 'CLEAR_ALL_DATA' }
   | { type: 'UPDATE_SYNCED_VEHICLES'; payload: {[key: string]: boolean} }
   | { type: 'SET_DARK_MODE'; payload: boolean }
-  | { type: 'SET_UNITS'; payload: 'imperial' | 'metric' };
+  | { type: 'SET_UNITS'; payload: 'imperial' | 'metric' }
+  | { type: 'UPDATE_VEHICLE_TIRE_DATA'; payload: { vehicleId: string; tireData: any } };
 
 const initialState: AppState = {
   registrationData: null,
@@ -118,6 +119,19 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
       return {
         ...state,
         units: action.payload,
+      };
+    case 'UPDATE_VEHICLE_TIRE_DATA':
+      return {
+        ...state,
+        vehiclesData: state.vehiclesData.map(vehicle => {
+          if (vehicle.id === action.payload.vehicleId) {
+            return {
+              ...vehicle,
+              tireData: action.payload.tireData
+            };
+          }
+          return vehicle;
+        }),
       };
     default:
       return state;

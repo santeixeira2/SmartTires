@@ -19,19 +19,9 @@ const getTireCountFromAxle = (axleType: string): number => {
 
 const CarPlayScreen: React.FC = () => {
   const { state, dispatch } = useAppStore();
+  const [isCarPlayConnected, setIsCarPlayConnected] = React.useState(false);
 
-  useEffect(() => {
-    CarPlay.registerOnConnect(() => {
-      console.log("CarPlay connected");
-      createCarPlayTemplates();
-    });
-
-    CarPlay.registerOnDisconnect(() => {
-      console.log('CarPlay disconnected');
-    });
-  }, [state.selectedVehicleId, state.vehiclesData]);
-
-  const createCarPlayTemplates = () => {
+  const createCarPlayTemplates = React.useCallback(() => {
     // Get current vehicle data from store
     const currentVehicle = state.vehiclesData?.find(v => v.id === state.selectedVehicleId) || state.vehiclesData?.[0];
     const vehicleName = currentVehicle?.name || 'Unknown Vehicle';
@@ -185,7 +175,30 @@ const CarPlayScreen: React.FC = () => {
     });
 
     CarPlay.setRootTemplate(template);
-  };
+  }, [state.selectedVehicleId, state.vehiclesData, state.units, dispatch]);
+
+  // Register CarPlay connect/disconnect handlers once
+  useEffect(() => {
+    CarPlay.registerOnConnect(() => {
+      console.log("CarPlay connected");
+      setIsCarPlayConnected(true);
+    });
+
+    CarPlay.registerOnDisconnect(() => {
+      console.log('CarPlay disconnected');
+      setIsCarPlayConnected(false);
+    });
+  }, []);
+
+  // Update CarPlay templates whenever data changes (if CarPlay is connected)
+  useEffect(() => {
+    if (isCarPlayConnected) {
+      console.log("CarPlay data changed - updating templates");
+      console.log("Vehicles:", state.vehiclesData.length);
+      console.log("Selected vehicle:", state.selectedVehicleId);
+      createCarPlayTemplates();
+    }
+  }, [state.selectedVehicleId, state.vehiclesData, state.units, isCarPlayConnected, createCarPlayTemplates]);
 
   return null; // CarPlay screen doesn't render anything visible
 };

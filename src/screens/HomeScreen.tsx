@@ -124,27 +124,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ frontLeft, frontRight, rearLeft
 
       <View style={styles.statusContainer}>
         <Text style={styles.sectionTitle}>Status Legend</Text>
-        
-        {/* Development: CarPlay Refresh Button */}
-        <TouchableOpacity 
-          style={styles.refreshButton}
-          onPress={() => {
-            console.log('🔄 Manual CarPlay refresh triggered');
-            // Scroll to selected vehicle
-            if (state.selectedVehicleId && scrollViewRef.current) {
-              const selectedIndex = vehicles.findIndex(v => v.id === state.selectedVehicleId);
-              if (selectedIndex !== -1) {
-                const scrollPosition = selectedIndex * (CARD_WIDTH + 16);
-                scrollViewRef.current.scrollTo({
-                  x: scrollPosition,
-                  animated: true
-                });
-              }
-            }
-          }}
-        >
-          <Text style={styles.refreshButtonText}>🔄 Refresh CarPlay</Text>
-        </TouchableOpacity>
         <View style={styles.legendContainer}>
           <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: 'green' }]} />
@@ -280,18 +259,6 @@ const styles = StyleSheet.create({
     color: '#6c757d',
     textAlign: 'center',
     lineHeight: 24,
-  },
-  refreshButton: {
-    backgroundColor: '#007bff',
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 10,
-    alignItems: 'center',
-  },
-  refreshButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
 

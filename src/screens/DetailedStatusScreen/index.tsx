@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, ScrollView, Modal, TouchableOpacity, Alert } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import Header from '../../components/Common/Header';
 import TireCard, { TireData } from '../../components/Vehicle/TireCard';
 import VehicleCard, { VehicleData } from '../../components/Vehicle/VehicleCard';
 import { useAppStore, useAppActions } from '../../store/AppStore';
+import TextBox from '../../components/Common/TextBox';
+import Dropdown from '../../components/Common/Dropdown';
+import { DropdownOption } from '../../components/Common/Dropdown/types';
 import styles from './styles';
 
 interface DetailedStatusScreenProps {
@@ -15,14 +19,89 @@ interface DetailedStatusScreenProps {
 
 const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire, vehicleName, vehiclesData: propVehiclesData, onNavigateToTireDetail }) => {
   const { state } = useAppStore();
-  const { setSelectedVehicle } = useAppActions();
+  const { setSelectedVehicle, setVehiclesData } = useAppActions();
+  const [showAddTowableModal, setShowAddTowableModal] = useState(false);
+  const [newTowable, setNewTowable] = useState({
+    name: "",
+    type: "",
+    axle: "",
+    tireCount: 4,
+  });
+
   const getTireCountFromAxle = (axleType: string): number => {
     const axleMap: {[key: string]: number} = {
       '1 Axle': 2,
       '2 Axles': 4,
+      '2 Axles w/Dually': 6,
+      '2 Axles w/Dually Tires': 6,
       '3 Axles': 6,
+      '4 Axles': 8,
+      '5 Axles': 10,
+      '6 Axles': 12,
     };
     return axleMap[axleType] || 4; // Default to 4 if not found
+  };
+
+  // Towables type options (same as RegisterSetup)
+  const towablesTypeOptions: DropdownOption[] = [
+    { label: "Travel Trailers", value: "Travel Trailers" },
+    { label: "Fifth Wheels", value: "Fifth Wheels" },
+    { label: "Vehicle", value: "Vehicle" },
+  ];
+
+  // Dynamic axle options based on towable type (same as RegisterSetup)
+  const getAxleOptions = (towablesType?: string): DropdownOption[] => {
+    if (towablesType === "Travel Trailers") {
+      return [
+        { label: "1 Axle", value: "1 Axle" },
+        { label: "2 Axles", value: "2 Axles" },
+      ];
+    } else if (towablesType === "Fifth Wheels") {
+      return [
+        { label: "2 Axles", value: "2 Axles" },
+        { label: "3 Axles", value: "3 Axles" },
+      ];
+    } else if (towablesType === "Vehicle") {
+      return [
+        { label: "2 Axles", value: "2 Axles" },
+        { label: "2 Axles w/Dually Tires", value: "2 Axles w/Dually Tires" },
+      ];
+    }
+    return [];
+  };
+
+  const handleAddTowable = () => {
+    if (!newTowable.name || !newTowable.type || !newTowable.axle) {
+      Alert.alert("Error", "Please fill in all towable fields");
+      return;
+    }
+
+    const tireCount = getTireCountFromAxle(newTowable.axle);
+    const towableVehicle: any = {
+      id: `towable-${Date.now()}`,
+      name: newTowable.name,
+      towingType: 'towable' as const,
+      axleType: newTowable.axle,
+      connectionStatus: 'connected' as const,
+      imageUrl: require('../../assets/images/trailer-side.png'),
+      role: 'towable',
+      tireCount: tireCount,
+      synced: false,
+    };
+
+    // Add to vehiclesData
+    const updatedVehicles = [...vehicles, towableVehicle];
+    setVehiclesData(updatedVehicles);
+
+    // Reset form and close modal
+    setNewTowable({
+      name: "",
+      type: "",
+      axle: "",
+      tireCount: 4,
+    });
+    setShowAddTowableModal(false);
+    Alert.alert("Success", "Towable added successfully!");
   };
 
   // Generate tires based on selected vehicle's axle type
@@ -154,8 +233,87 @@ const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire
               />
             );
           })}
+          
+          {/* Add Towable Button */}
+          <TouchableOpacity
+            style={styles.addTowableButton}
+            onPress={() => setShowAddTowableModal(true)}
+            activeOpacity={0.7}
+          >
+            <Icon name="add" size={32} color="#007AFF" />
+            <Text style={styles.addTowableButtonText}>Add Towable</Text>
+          </TouchableOpacity>
         </ScrollView>
       </View>
+
+      {/* Add Towable Modal */}
+      <Modal
+        visible={showAddTowableModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowAddTowableModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add Towable</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowAddTowableModal(false)}
+              >
+                <Icon name="close" size={24} color="#6c757d" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalBody}>
+              <TextBox
+                placeholder="Towable Name"
+                value={newTowable.name}
+                onChangeText={(value: string) =>
+                  setNewTowable((prev) => ({ ...prev, name: value }))
+                }
+                icon="car-outline"
+              />
+
+              <Dropdown
+                options={towablesTypeOptions}
+                selectedValue={newTowable.type}
+                onSelect={(value: string) =>
+                  setNewTowable((prev) => ({ ...prev, type: value, axle: "" }))
+                }
+                placeholder="Select Towable Type *"
+                icon="car-outline"
+              />
+
+              <Dropdown
+                options={getAxleOptions(newTowable.type)}
+                selectedValue={newTowable.axle}
+                onSelect={(value: string) =>
+                  setNewTowable((prev) => ({ ...prev, axle: value }))
+                }
+                placeholder="Select Axle Type *"
+                disabled={!newTowable.type}
+                icon="time-outline"
+              />
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setShowAddTowableModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={handleAddTowable}
+              >
+                <Text style={styles.addButtonText}>Add Towable</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <View style={styles.content}>
         <Text style={styles.sectionTitle}>
