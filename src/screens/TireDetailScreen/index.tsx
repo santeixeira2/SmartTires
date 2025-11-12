@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import Header from '../../components/Common/Header';
 import { TireData } from '../../components/Vehicle/TireCard';
-import { useAppStore } from '../../store/AppStore';
+import { useAppStore, VehicleThresholds } from '../../store/AppStore';
 
 interface TireDetailScreenProps {
   tireId: string;
@@ -28,10 +28,8 @@ const TireDetailScreen: React.FC<TireDetailScreenProps> = ({ tireId, vehicleName
     console.log('TireDetailScreen - registrationData:', state.registrationData);
     
     if (selectedVehicle && selectedVehicle.tireData) {
-      // The tireData is an object with position keys, not an array
-      // Convert tireId to position key (e.g., "1" -> "front-left", "2" -> "front-right")
       const positionKeys = Object.keys(selectedVehicle.tireData);
-      const tirePosition = positionKeys[parseInt(tireId) - 1]; // tireId is 1-based, array is 0-based
+      const tirePosition = positionKeys[parseInt(tireId) - 1];
       
       console.log('TireDetailScreen - positionKeys:', positionKeys);
       console.log('TireDetailScreen - tirePosition:', tirePosition);
@@ -91,11 +89,12 @@ const TireDetailScreen: React.FC<TireDetailScreenProps> = ({ tireId, vehicleName
           console.log('TireDetailScreen - no vehicleSensorIds for this vehicle, using fallback:', sensorId);
         }
         
-        // Convert to TireData format
+        // Convert to TireData format - READ FROM STORE
+        // tireInfo.temp is in Celsius, convert to Fahrenheit for display
         const tire: TireData = {
           id: parseInt(tireId),
           pressure: tireInfo.psi,
-          temperature: tireInfo.temp,
+          temperature: (tireInfo.temp * 9/5) + 32, // Convert Celsius to Fahrenheit
           connected: true,
           deviceId: sensorId, // Use actual sensor ID
           position: tirePosition,
@@ -103,70 +102,76 @@ const TireDetailScreen: React.FC<TireDetailScreenProps> = ({ tireId, vehicleName
         
         setTireData(tire);
         
-        // Generate mock history data
+        // Generate mock history data (last 24 hours, every 2 hours)
         const history = [];
-        for (let i = 0; i < 10; i++) {
-          const date = new Date();
-          date.setHours(date.getHours() - i * 2);
+        const basePressure = tire.pressure;
+        const baseTempC = (tire.temperature - 32) * 5/9; // Convert back to Celsius for calculations
+        const now = new Date();
+        
+        for (let i = 0; i < 12; i++) {
+          const date = new Date(now);
+          date.setHours(date.getHours() - (i * 2));
+          
+          // Generate realistic variations (±2 PSI, ±3°C)
+          const pressureVariation = (Math.random() - 0.5) * 4;
+          const tempVariation = (Math.random() - 0.5) * 6;
+          const pressure = Math.max(25, Math.min(45, basePressure + pressureVariation));
+          const tempCelsius = Math.max(15, Math.min(35, baseTempC + tempVariation));
+          const tempFahrenheit = (tempCelsius * 9/5) + 32;
+          
+          // Get thresholds from vehicle or use defaults
+          const vehicle = state.vehiclesData.find(v => v.id === state.selectedVehicleId);
+          const thresholds: VehicleThresholds = vehicle?.thresholds || {
+            pressureLow: 28,
+            pressureWarning: 32,
+            temperatureHigh: 160,
+          };
+          
+          let status = 'Normal';
+          if (pressure < thresholds.pressureLow) {
+            status = 'Low Pressure';
+          } else if (pressure > 35) { // High pressure threshold can be added to VehicleThresholds if needed
+            status = 'High Pressure';
+          }
+          
           history.push({
             timestamp: date.toISOString(),
-            pressure: tire.pressure + (Math.random() - 0.5) * 2,
-            temperature: tire.temperature + (Math.random() - 0.5) * 3,
-            status: tire.pressure < 28 ? 'Low Pressure' : tire.pressure > 35 ? 'High Pressure' : 'Normal'
+            pressure: parseFloat(pressure.toFixed(1)),
+            temperature: tempFahrenheit, // Store as Fahrenheit for display
+            status: status
           });
         }
+        
+        // Sort by timestamp (most recent first)
+        history.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         setTireHistory(history);
       } else {
-        console.log('TireDetailScreen - tire position not found, generating mock data');
-        // Generate mock tire data if position not found
-        const mockTire = {
+        console.log('TireDetailScreen - tire position not found, no data available');
+        // NO MOCK DATA - show as disconnected
+        const disconnectedTire = {
           id: parseInt(tireId),
-          pressure: 30 + Math.random() * 5,
-          temperature: 20 + Math.random() * 10,
-          connected: true,
+          pressure: 0,
+          temperature: 0,
+          connected: false,
           deviceId: `device_${tireId}`,
           position: `tire_${tireId}`,
         };
-        setTireData(mockTire);
-        
-        const history = [];
-        for (let i = 0; i < 10; i++) {
-          const date = new Date();
-          date.setHours(date.getHours() - i * 2);
-          history.push({
-            timestamp: date.toISOString(),
-            pressure: mockTire.pressure + (Math.random() - 0.5) * 2,
-            temperature: mockTire.temperature + (Math.random() - 0.5) * 3,
-            status: mockTire.pressure < 28 ? 'Low Pressure' : mockTire.pressure > 35 ? 'High Pressure' : 'Normal'
-          });
-        }
-        setTireHistory(history);
+        setTireData(disconnectedTire);
+        setTireHistory([]);
       }
     } else {
-      console.log('TireDetailScreen - no selected vehicle or tireData found, generating mock data');
-      // Generate mock tire data if no vehicle or tireData
-      const mockTire = {
+      console.log('TireDetailScreen - no selected vehicle or tireData found, no data available');
+      // NO MOCK DATA - show as disconnected
+      const disconnectedTire = {
         id: parseInt(tireId),
-        pressure: 30 + Math.random() * 5,
-        temperature: 20 + Math.random() * 10,
-        connected: true,
+        pressure: 0,
+        temperature: 0,
+        connected: false,
         deviceId: `device_${tireId}`,
         position: `tire_${tireId}`,
       };
-      setTireData(mockTire);
-      
-      const history = [];
-      for (let i = 0; i < 10; i++) {
-        const date = new Date();
-        date.setHours(date.getHours() - i * 2);
-        history.push({
-          timestamp: date.toISOString(),
-          pressure: mockTire.pressure + (Math.random() - 0.5) * 2,
-          temperature: mockTire.temperature + (Math.random() - 0.5) * 3,
-          status: mockTire.pressure < 28 ? 'Low Pressure' : mockTire.pressure > 35 ? 'High Pressure' : 'Normal'
-        });
-      }
-      setTireHistory(history);
+      setTireData(disconnectedTire);
+      setTireHistory([]);
     }
   }, [tireId, state.vehiclesData, state.selectedVehicleId, state.registrationData]);
 
@@ -230,7 +235,22 @@ const TireDetailScreen: React.FC<TireDetailScreenProps> = ({ tireId, vehicleName
           <View style={styles.statusRow}>
             <View style={styles.statusItem}>
               <Text style={styles.statusLabel}>Pressure</Text>
-              <Text style={[styles.statusValue, { color: getStatusColor(tireData.pressure < 28 ? 'Low Pressure' : tireData.pressure > 35 ? 'High Pressure' : 'Normal') }]}>
+              <Text style={[styles.statusValue, { 
+                color: (() => {
+                  const selectedVehicle = state.vehiclesData.find(v => v.id === state.selectedVehicleId);
+                  const thresholds: VehicleThresholds = selectedVehicle?.thresholds || {
+                    pressureLow: 28,
+                    pressureWarning: 32,
+                    temperatureHigh: 160,
+                  };
+                  if (tireData.pressure < thresholds.pressureLow) {
+                    return getStatusColor('Low Pressure');
+                  } else if (tireData.pressure > 35) {
+                    return getStatusColor('High Pressure');
+                  }
+                  return getStatusColor('Normal');
+                })()
+              }]}>
                 {tireData.pressure.toFixed(1)} PSI
               </Text>
             </View>

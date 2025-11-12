@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, Alert } from 'react-native';
 import styles from './TruckTopDownView.style';
 import AxleTopDownView, { AxleTireData } from './AxleTopDownView';
-import { useAppStore } from '../../../store/AppStore';
+import { useAppStore, VehicleThresholds } from '../../../store/AppStore';
 import { formatPressure, formatTemperature } from '../../../utils/units';
 import { 
   TruckTopDownViewProps, 
@@ -25,7 +25,8 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
   rearRight,
   syncedTires,
   axleType,
-  dynamicTireData
+  dynamicTireData,
+  thresholds
 }) => {
   const { state } = useAppStore();
   const getTireColor = (tireId: string) => {
@@ -75,9 +76,12 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
     const axleTireData: {[key: string]: AxleTireData} = {};
     if (dynamicTireData) {
       Object.keys(dynamicTireData).forEach(key => {
+        const tire = dynamicTireData[key];
+        // Standardize: use psi/temp consistently (store format)
+        // TireData interface uses psi/temp
         axleTireData[key] = {
-          psi: dynamicTireData[key].psi,
-          temp: dynamicTireData[key].temp
+          psi: tire?.psi ?? 30,
+          temp: tire?.temp ?? 20
         };  
       });
     }
@@ -96,6 +100,7 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
             : vehicleType
         }
         style={style}
+        thresholds={thresholds}
       />
     );
   }
@@ -103,8 +108,15 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
   useEffect(() => {
     if (frontLeft && frontRight && rearLeft && rearRight && !syncedTires) {
       const calcColor = (tire: TireData) => {
-        if (tire.psi < 28 || tire.temp > 160) return "red";
-        if (tire.psi < 32) return "orange"; 
+        // Use stored thresholds or fallback to defaults
+        const pressureLow = thresholds?.pressureLow ?? 28;
+        const pressureWarning = thresholds?.pressureWarning ?? 32;
+        const temperatureHigh = thresholds?.temperatureHigh ?? 160;
+        
+        // tire.temp is in Celsius, convert to Fahrenheit for comparison
+        const tempF = (tire.temp * 9/5) + 32;
+        if (tire.psi < pressureLow || tempF > temperatureHigh) return "red";
+        if (tire.psi < pressureWarning) return "orange"; 
         return "green";
       };
 
@@ -115,7 +127,7 @@ const TruckTopDownView: React.FC<TruckTopDownViewProps> = ({
         rearRight: calcColor(rearRight),
       });
     }
-  }, [frontLeft, frontRight, rearLeft, rearRight, syncedTires]);
+  }, [frontLeft, frontRight, rearLeft, rearRight, syncedTires, thresholds]);
 
   const getVehicleColor = () => {
     switch (vehicleType) {

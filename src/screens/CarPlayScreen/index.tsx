@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { CarPlay, ListTemplate, TabBarTemplate } from 'react-native-carplay';
-import { useAppStore } from '../../store/AppStore';
+import { useAppStore, VehicleThresholds } from '../../store/AppStore';
 import { formatPressure, formatTemperature } from '../../utils/units';
 import uuid from 'react-native-uuid';
 
@@ -31,45 +31,88 @@ const CarPlayScreen: React.FC = () => {
     const tireItems = [];
     
     // Use actual tire data from store
-    if (currentVehicle?.tireData) {
+    if (currentVehicle?.tireData && Object.keys(currentVehicle.tireData).length > 0) {
       const tireData = currentVehicle.tireData;
       const tireKeys = Object.keys(tireData);
+      console.log('CarPlay: Using tire data from store:', tireData);
+      
       tireKeys.forEach((tireId, index) => {
         const tire = tireData[tireId];
-        const pressure = tire.psi || tire.pressure || 30;
-        const temperature = tire.temp || tire.temperature || 20;
-        const status = pressure < 28 ? 'Low Pressure' : pressure > 35 ? 'High Pressure' : 'Normal';
+        // Standardize: store uses psi/temp, but ensure we read correctly
+        const pressure = tire?.psi ?? tire?.pressure ?? 30;
+        // Temperature is stored in Celsius (temp), convert to Fahrenheit for display
+        const tempCelsius = tire?.temp ?? tire?.temperature ?? 20;
+        const temperatureF = (tempCelsius * 9/5) + 32;
         
-        let position = 'Front';
-        let side = 'Left';
-        if (tireCount === 2) {
-          side = index === 0 ? 'Left' : 'Right';
-          position = 'Rear';
-        } else {
-          side = index % 2 === 0 ? 'Left' : 'Right';
-          position = index < tireCount / 2 ? 'Front' : 'Rear';
+        // Use stored thresholds or fallback to defaults
+        const thresholds: VehicleThresholds = currentVehicle?.thresholds || {
+          pressureLow: 28,
+          pressureWarning: 32,
+          temperatureHigh: 160,
+        };
+        
+        let status = 'Normal';
+        if (pressure < thresholds.pressureLow || temperatureF > thresholds.temperatureHigh) {
+          status = 'Low Pressure';
+        } else if (pressure < thresholds.pressureWarning) {
+          status = 'Low Pressure';
+        } else if (pressure > 35) { // High pressure threshold can be added to VehicleThresholds if needed
+          status = 'High Pressure';
         }
         
-          tireItems.push({
-            id: `tire-${tireId}`,
-            text: `${position} ${side}`,
-            detailText: `${formatPressure(pressure, state.units)} • ${formatTemperature((temperature * 9/5) + 32, state.units)} • ${status}`
-          });
+        // Map tire IDs to positions
+        let position = 'Front';
+        let side = 'Left';
+        
+        // Better tire position mapping based on tire ID
+        if (tireId.includes('front')) {
+          position = 'Front';
+          side = tireId.includes('left') ? 'Left' : 'Right';
+        } else if (tireId.includes('rear')) {
+          position = 'Rear';
+          side = tireId.includes('left') ? 'Left' : 'Right';
+        } else if (tireId.includes('middle')) {
+          position = 'Middle';
+          side = tireId.includes('left') ? 'Left' : 'Right';
+        } else {
+          // Fallback to index-based
+          if (tireCount === 2) {
+            side = index === 0 ? 'Left' : 'Right';
+            position = 'Rear';
+          } else {
+            side = index % 2 === 0 ? 'Left' : 'Right';
+            position = index < tireCount / 2 ? 'Front' : 'Rear';
+          }
+        }
+        
+        tireItems.push({
+          id: `tire-${tireId}`,
+          text: `${position} ${side}`,
+          detailText: `${formatPressure(pressure, state.units)} • ${formatTemperature(temperatureF, state.units)} • ${status}`
+        });
       });
+      
+      // Fill in missing tires if we have fewer than expected
+      if (tireItems.length < tireCount) {
+        console.log(`CarPlay: Only ${tireItems.length} tires in data, expected ${tireCount}`);
+      }
     } else {
-      // Fallback to generated data if no tire data available
+      // NO FALLBACK - Show "No Data" if tire data not available
+      console.warn('CarPlay: No tire data available for vehicle:', currentVehicle?.name);
+      console.log('CarPlay: Current vehicle:', currentVehicle);
+      console.log('CarPlay: Tire data exists?', !!currentVehicle?.tireData);
+      console.log('CarPlay: Tire data keys:', currentVehicle?.tireData ? Object.keys(currentVehicle.tireData) : 'none');
+      
+      // Show "No Data" for all tires instead of generating fake values
       for (let i = 0; i < tireCount; i++) {
-        const pressure = 30 + Math.random() * 5;
-        const temperature = 20 + Math.random() * 10;
-        const status = pressure < 28 ? 'Low Pressure' : pressure > 35 ? 'High Pressure' : 'Normal';
         const position = i < tireCount / 2 ? 'Front' : 'Rear';
         const side = i % 2 === 0 ? 'Left' : 'Right';
         
-          tireItems.push({
-            id: `tire-${i}`,
-            text: `${position} ${side}`,
-            detailText: `${formatPressure(pressure, state.units)} • ${formatTemperature((temperature * 9/5) + 32, state.units)} • ${status}`
-          });
+        tireItems.push({
+          id: `tire-${i}`,
+          text: `${position} ${side}`,
+          detailText: `No Data • Waiting for sensor...`
+        });
       }
     }
 
@@ -190,130 +233,37 @@ const CarPlayScreen: React.FC = () => {
     });
   }, []);
 
+  // Create a serialized version of tire data to detect changes
+  const tireDataHash = React.useMemo(() => {
+    const hash = JSON.stringify(
+      state.vehiclesData.map(v => ({
+        id: v.id,
+        tireData: v.tireData
+      }))
+    );
+    console.log('CarPlay: tireDataHash computed:', hash.substring(0, 100));
+    return hash;
+  }, [state.vehiclesData]);
+
   // Update CarPlay templates whenever data changes (if CarPlay is connected)
   useEffect(() => {
     if (isCarPlayConnected) {
       console.log("CarPlay data changed - updating templates");
       console.log("Vehicles:", state.vehiclesData.length);
       console.log("Selected vehicle:", state.selectedVehicleId);
+      const currentVehicle = state.vehiclesData.find(v => v.id === state.selectedVehicleId);
+      console.log("Vehicle tire data:", currentVehicle?.tireData);
+      console.log("Tire data hash:", tireDataHash.substring(0, 100));
       createCarPlayTemplates();
     }
-  }, [state.selectedVehicleId, state.vehiclesData, state.units, isCarPlayConnected, createCarPlayTemplates]);
+  }, [state.selectedVehicleId, tireDataHash, state.units, isCarPlayConnected, createCarPlayTemplates]);
 
   return null; // CarPlay screen doesn't render anything visible
 };
 
 // Helper functions to create CarPlay templates
-const createTireOverviewTemplate = (currentVehicle: any) => {
-  const sections = [
-    {
-      header: 'Vehicle Layout',
-      items: [
-        { 
-          id: "layout-info", 
-          text: `🚗 ${currentVehicle?.name || 'Vehicle'}`, 
-          detailText: "Top-down tire view"
-        }
-      ]
-    }
-  ];
-
-  const tireCount = getTireCountFromAxle(currentVehicle?.axleType || '2 Axles');
-  const tireItems = [];
-  
-  for (let i = 0; i < tireCount; i++) {
-    const pressure = 30 + Math.random() * 5;
-    const temperature = 20 + Math.random() * 10;
-    const status = pressure < 28 ? 'Low Pressure' : pressure > 35 ? 'High Pressure' : 'Normal';
-    const position = i < tireCount / 2 ? 'Front' : 'Rear';
-    const side = i % 2 === 0 ? 'Left' : 'Right';
-    
-    tireItems.push({
-      id: `tire-${i}`,
-      text: `${position} ${side} Tire`,
-      detailText: `${pressure.toFixed(1)} PSI • ${((temperature * 9/5) + 32).toFixed(1)}°F • ${status}`
-    });
-  }
-
-  sections.push({
-    header: 'Tire Status',
-    items: tireItems
-  });
-
-  sections.push({
-    header: 'Status Legend',
-    items: [
-      { 
-        id: "legend-normal", 
-        text: "🟢 Normal", 
-        detailText: "All systems operating normally"
-      },
-      { 
-        id: "legend-warning", 
-        text: "🟡 Warning", 
-        detailText: "Monitor closely"
-      },
-      { 
-        id: "legend-critical", 
-        text: "🔴 Critical", 
-        detailText: "Immediate attention required"
-      }
-    ]
-  });
-
-  return new ListTemplate({
-    id: uuid.v4(),
-    title: 'Tire Status',
-    sections: sections,
-    onItemSelect: async ({ templateId, index }) => {
-      console.log(`Selected tire overview item at index: ${index}`);
-    }
-  });
-};
-
-const createDetailedStatusTemplate = (vehiclesData: any[], selectedVehicleId?: string) => {
-  const currentVehicle = vehiclesData.find(v => v.id === selectedVehicleId) || vehiclesData[0];
-  const tireCount = getTireCountFromAxle(currentVehicle?.axleType || '2 Axles');
-  
-  const tireItems = [];
-  for (let i = 0; i < tireCount; i++) {
-    const pressure = 30 + Math.random() * 5;
-    const temperature = 68 + Math.random() * 10;
-    const status = pressure < 74 ? 'Low Pressure' : pressure > 100 ? 'High Pressure' : 'Normal';
-    const position = i < tireCount / 2 ? 'Front' : 'Rear';
-    const side = i % 2 === 0 ? 'Left' : 'Right';
-    
-    tireItems.push({
-      id: `tire-detail-${i}`,
-      text: `${position} ${side} Tire`,
-      detailText: `${pressure.toFixed(1)} PSI • ${temperature.toFixed(1)}°F • ${status}`
-    });
-  }
-
-  return new ListTemplate({
-    id: uuid.v4(),
-    title: 'Detailed Status',
-    sections: [
-      {
-        header: 'Vehicle Information',
-        items: [
-          { 
-            id: "vehicle-info", 
-            text: currentVehicle?.name || 'Unknown Vehicle', 
-            detailText: `${currentVehicle?.axleType || '2 Axles'} • ${tireCount} Tires`
-          }
-        ]
-      },
-      {
-        header: 'Tire Details',
-        items: tireItems
-      }
-    ],
-    onItemSelect: async ({ templateId, index }) => {
-      console.log(`Selected detailed tire at index: ${index}`);
-    }
-  });
-};
+// NOTE: These helper functions are NOT USED - the main template is created in createCarPlayTemplates
+// They are kept for reference but should read from store if ever used
 
 const createVehicleListTemplate = (vehiclesData: any[], dispatch: any) => {
   const vehicleItems = vehiclesData.map(vehicle => {
@@ -394,40 +344,6 @@ const createSettingsTemplate = () =>
     }
   });
 
-const createTireDetailTemplate = (tireId: string, vehicleData: any) => {
-  const pressure = 30 + Math.random() * 5;
-  const temperature = 20 + Math.random() * 10;
-  const status = pressure < 28 ? 'Low Pressure' : pressure > 35 ? 'High Pressure' : 'Normal';
-
-  return new ListTemplate({
-    id: uuid.v4(),
-    title: `Tire ${tireId}`,
-    sections: [
-      {
-        header: 'Current Status',
-        items: [
-          { 
-            id: "pressure", 
-            text: "Pressure", 
-            detailText: `${pressure.toFixed(1)} PSI`
-          },
-          { 
-            id: "temperature", 
-            text: "Temperature", 
-            detailText: `${((temperature * 9/5) + 32).toFixed(1)}°F`
-          },
-          { 
-            id: "status", 
-            text: "Status", 
-            detailText: status
-          }
-        ]
-      }
-    ],
-    onItemSelect: async ({ templateId, index }) => {
-      console.log(`Selected tire detail item at index: ${index}`);
-    }
-  });
-};
+// NOTE: createTireDetailTemplate is NOT USED - should read from store if ever implemented
 
 export default CarPlayScreen;

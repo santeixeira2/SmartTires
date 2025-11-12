@@ -1,3 +1,5 @@
+import { VehicleThresholds } from '../../../store/AppStore';
+
 export interface TireData {
     psi: number;
     temp: number;
@@ -12,7 +14,7 @@ export interface TireData {
     temperature?: number;
     isConnected?: boolean;
   }
-  
+
   export interface TruckTopDownViewProps {
     vehicleType?: 'power_unit' | 'towing_vehicles' | 'travel_trailer' | 'fifth_wheel' | 'towable';
     axleCount?: number;
@@ -32,4 +34,5 @@ export interface TireData {
     // New dynamic axle support
     axleType?: '1 Axle' | '2 Axles' | '2 Axles w/Dually' | '3 Axles' | '4 Axles' | '5 Axles' | '6 Axles';
     dynamicTireData?: {[key: string]: TireData};
+    thresholds?: VehicleThresholds;
   }

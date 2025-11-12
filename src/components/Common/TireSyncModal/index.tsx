@@ -7,16 +7,18 @@ import {
   StyleSheet,
   SafeAreaView,
   TextInput,
+  ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import TruckTopDownView from '../../Vehicle/TruckTopDownView';
 import { CameraScanner } from '../QrCodeScanner';
+import { VehicleThresholds } from '../../../store/AppStore';
 
 interface TireSyncModalProps {
   visible: boolean;
   onClose: () => void;
   onTireSync: (tireId: string, sensorId: string) => void;
-  onVehicleSyncComplete: (sensorIds: {[key: string]: string}) => void;
+  onVehicleSyncComplete: (sensorIds: {[key: string]: string}, thresholds?: VehicleThresholds) => void;
   vehicleName: string;
   vehicleType?: 'power_unit' | 'towable';
   axleType?: string;
@@ -36,6 +38,12 @@ const TireSyncModal: React.FC<TireSyncModalProps> = ({
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualSensorId, setManualSensorId] = useState('');
   const [syncedTires, setSyncedTires] = useState<{[key: string]: string}>({});
+  const [showThresholdInput, setShowThresholdInput] = useState(false);
+  const [thresholds, setThresholds] = useState<VehicleThresholds>({
+    pressureLow: 28,      // Default: 28 PSI
+    pressureWarning: 32, // Default: 32 PSI
+    temperatureHigh: 160, // Default: 160°F
+  });
   
   // Get expected tire count based on axle type
   const getExpectedTireCount = () => {
@@ -61,11 +69,17 @@ const TireSyncModal: React.FC<TireSyncModalProps> = ({
 
   const expectedTireCount = getExpectedTireCount();
   
-  // Reset synced tires when modal opens
+  // Reset synced tires and thresholds when modal opens
   React.useEffect(() => {
     if (visible) {
       console.log('🔥 TireSyncModal - Modal opened, resetting syncedTires');
       setSyncedTires({});
+      setShowThresholdInput(false);
+      setThresholds({
+        pressureLow: 28,
+        pressureWarning: 32,
+        temperatureHigh: 160,
+      });
     }
   }, [visible]);
 
@@ -199,18 +213,17 @@ const TireSyncModal: React.FC<TireSyncModalProps> = ({
                   ))}
                   
                   {/* Complete Sync Button */}
-                  {Object.keys(syncedTires).length === expectedTireCount && (
+                  {Object.keys(syncedTires).length === expectedTireCount && !showThresholdInput && (
                     <TouchableOpacity
                       style={styles.completeSyncButton}
                       onPress={() => {
-                        console.log(`✅ All ${expectedTireCount} tires synced! Vehicle sync complete.`);
-                        console.log('📊 Sensor IDs saved:', syncedTires);
-                        onVehicleSyncComplete(syncedTires);
+                        console.log(`✅ All ${expectedTireCount} tires synced! Showing threshold input.`);
+                        setShowThresholdInput(true);
                       }}
                     >
                       <Icon name="checkmark-circle" size={24} color="#fff" />
                       <Text style={styles.completeSyncButtonText}>
-                        Complete Vehicle Sync ({Object.keys(syncedTires).length}/{expectedTireCount})
+                        Set Thresholds & Complete Sync ({Object.keys(syncedTires).length}/{expectedTireCount})
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -311,6 +324,89 @@ const TireSyncModal: React.FC<TireSyncModalProps> = ({
                   <Text style={styles.submitButtonText}>Submit</Text>
                 </TouchableOpacity>
               </View>
+            </View>
+          )}
+
+          {showThresholdInput && (
+            <View style={styles.thresholdInputContainer}>
+              <View style={styles.thresholdInputHeader}>
+                <TouchableOpacity
+                  style={styles.thresholdInputCloseButton}
+                  onPress={() => {
+                    setShowThresholdInput(false);
+                  }}
+                >
+                  <Icon name="arrow-back-outline" size={24} color="#333" />
+                </TouchableOpacity>
+                <Text style={styles.thresholdInputTitle}>Set Tire Thresholds</Text>
+                <View style={{ width: 24 }} />
+              </View>
+              
+              <ScrollView style={styles.thresholdInputSection}>
+                <Text style={styles.thresholdDescription}>
+                  Configure pressure and temperature thresholds for {vehicleName}. These values will be used to determine tire status alerts.
+                </Text>
+                
+                <View style={styles.thresholdInputGroup}>
+                  <Text style={styles.thresholdLabel}>Low Pressure Warning (PSI)</Text>
+                  <Text style={styles.thresholdHint}>Alert when pressure drops below this value</Text>
+                  <TextInput
+                    style={styles.thresholdTextInput}
+                    value={thresholds.pressureLow.toString()}
+                    onChangeText={(text: string) => {
+                      const value = parseFloat(text) || 0;
+                      setThresholds(prev => ({ ...prev, pressureLow: value }));
+                    }}
+                    placeholder="28"
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={styles.thresholdInputGroup}>
+                  <Text style={styles.thresholdLabel}>Pressure Warning (PSI)</Text>
+                  <Text style={styles.thresholdHint}>Warning when pressure is high than this value</Text>
+                  <TextInput
+                    style={styles.thresholdTextInput}
+                    value={thresholds.pressureWarning.toString()}
+                    onChangeText={(text: string) => {
+                      const value = parseFloat(text) || 0;
+                      setThresholds(prev => ({ ...prev, pressureWarning: value }));
+                    }}
+                    placeholder="32"
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={styles.thresholdInputGroup}>
+                  <Text style={styles.thresholdLabel}>High Temperature Warning (°F)</Text>
+                  <Text style={styles.thresholdHint}>Alert when temperature exceeds this value</Text>
+                  <TextInput
+                    style={styles.thresholdTextInput}
+                    value={thresholds.temperatureHigh.toString()}
+                    onChangeText={(text: string) => {
+                      const value = parseFloat(text) || 0;
+                      setThresholds(prev => ({ ...prev, temperatureHigh: value }));
+                    }}
+                    placeholder="160"
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <TouchableOpacity
+                  style={styles.completeThresholdButton}
+                  onPress={() => {
+                    console.log(`✅ Thresholds set:`, thresholds);
+                    console.log(`✅ All ${expectedTireCount} tires synced! Vehicle sync complete.`);
+                    console.log('📊 Sensor IDs saved:', syncedTires);
+                    onVehicleSyncComplete(syncedTires, thresholds);
+                  }}
+                >
+                  <Icon name="checkmark-circle" size={24} color="#fff" />
+                  <Text style={styles.completeThresholdButtonText}>
+                    Complete Vehicle Sync
+                  </Text>
+                </TouchableOpacity>
+              </ScrollView>
             </View>
           )}
         </View>
@@ -541,6 +637,81 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   completeSyncButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  thresholdInputContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#fff',
+  },
+  thresholdInputHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  thresholdInputCloseButton: {
+    padding: 5,
+  },
+  thresholdInputTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    flex: 1,
+    textAlign: 'center',
+  },
+  thresholdInputSection: {
+    flex: 1,
+    padding: 20,
+  },
+  thresholdDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  thresholdInputGroup: {
+    marginBottom: 24,
+  },
+  thresholdLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  thresholdHint: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 8,
+  },
+  thresholdTextInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 15,
+    fontSize: 16,
+    backgroundColor: '#fff',
+  },
+  completeThresholdButton: {
+    backgroundColor: '#28a745',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  completeThresholdButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',

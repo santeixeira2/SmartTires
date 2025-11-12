@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Modal, TouchableOpacity, Alert } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { celsiusToFahrenheit } from '../../utils/tireData';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import Header from '../../components/Common/Header';
 import TireCard, { TireData } from '../../components/Vehicle/TireCard';
 import VehicleCard, { VehicleData } from '../../components/Vehicle/VehicleCard';
 import { useAppStore, useAppActions } from '../../store/AppStore';
-import TextBox from '../../components/Common/TextBox';
-import Dropdown from '../../components/Common/Dropdown';
-import { DropdownOption } from '../../components/Common/Dropdown/types';
 import styles from './styles';
 
 interface DetailedStatusScreenProps {
@@ -19,14 +16,7 @@ interface DetailedStatusScreenProps {
 
 const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire, vehicleName, vehiclesData: propVehiclesData, onNavigateToTireDetail }) => {
   const { state } = useAppStore();
-  const { setSelectedVehicle, setVehiclesData } = useAppActions();
-  const [showAddTowableModal, setShowAddTowableModal] = useState(false);
-  const [newTowable, setNewTowable] = useState({
-    name: "",
-    type: "",
-    axle: "",
-    tireCount: 4,
-  });
+  const { setSelectedVehicle } = useAppActions();
 
   const getTireCountFromAxle = (axleType: string): number => {
     const axleMap: {[key: string]: number} = {
@@ -42,81 +32,39 @@ const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire
     return axleMap[axleType] || 4; // Default to 4 if not found
   };
 
-  // Towables type options (same as RegisterSetup)
-  const towablesTypeOptions: DropdownOption[] = [
-    { label: "Travel Trailers", value: "Travel Trailers" },
-    { label: "Fifth Wheels", value: "Fifth Wheels" },
-    { label: "Vehicle", value: "Vehicle" },
-  ];
 
-  // Dynamic axle options based on towable type (same as RegisterSetup)
-  const getAxleOptions = (towablesType?: string): DropdownOption[] => {
-    if (towablesType === "Travel Trailers") {
-      return [
-        { label: "1 Axle", value: "1 Axle" },
-        { label: "2 Axles", value: "2 Axles" },
-      ];
-    } else if (towablesType === "Fifth Wheels") {
-      return [
-        { label: "2 Axles", value: "2 Axles" },
-        { label: "3 Axles", value: "3 Axles" },
-      ];
-    } else if (towablesType === "Vehicle") {
-      return [
-        { label: "2 Axles", value: "2 Axles" },
-        { label: "2 Axles w/Dually Tires", value: "2 Axles w/Dually Tires" },
-      ];
-    }
-    return [];
-  };
-
-  const handleAddTowable = () => {
-    if (!newTowable.name || !newTowable.type || !newTowable.axle) {
-      Alert.alert("Error", "Please fill in all towable fields");
-      return;
-    }
-
-    const tireCount = getTireCountFromAxle(newTowable.axle);
-    const towableVehicle: any = {
-      id: `towable-${Date.now()}`,
-      name: newTowable.name,
-      towingType: 'towable' as const,
-      axleType: newTowable.axle,
-      connectionStatus: 'connected' as const,
-      imageUrl: require('../../assets/images/trailer-side.png'),
-      role: 'towable',
-      tireCount: tireCount,
-      synced: false,
-    };
-
-    // Add to vehiclesData
-    const updatedVehicles = [...vehicles, towableVehicle];
-    setVehiclesData(updatedVehicles);
-
-    // Reset form and close modal
-    setNewTowable({
-      name: "",
-      type: "",
-      axle: "",
-      tireCount: 4,
-    });
-    setShowAddTowableModal(false);
-    Alert.alert("Success", "Towable added successfully!");
-  };
-
-  // Generate tires based on selected vehicle's axle type
-  const generateTiresForVehicle = (vehicle: VehicleData): TireData[] => {
+  // Generate tires based on selected vehicle's axle type - READ FROM STORE
+  const generateTiresForVehicle = (vehicle: VehicleData | any): TireData[] => {
     const tireCount = getTireCountFromAxle(vehicle.axleType);
     const tires: TireData[] = [];
     
+    // Get tire data from store (vehicle may have tireData from store)
+    const storeTireData = (vehicle as any).tireData || {};
+    
+    // Map tire positions based on axle type
+    const tirePositions: string[] = [];
+    if (tireCount === 2) {
+      tirePositions.push('left', 'right');
+    } else if (tireCount === 4) {
+      tirePositions.push('front-left', 'front-right', 'rear-left', 'rear-right');
+    } else if (tireCount === 6 && vehicle.axleType === '2 Axles w/Dually') {
+      tirePositions.push('front-left', 'front-right', 'rear-left-inner', 'rear-left-outer', 'rear-right-inner', 'rear-right-outer');
+    } else if (tireCount === 6) {
+      tirePositions.push('front-left', 'front-right', 'middle-left', 'middle-right', 'rear-left', 'rear-right');
+    }
+    
     for (let i = 0; i < tireCount; i++) {
+      const tirePosition = tirePositions[i] || `tire-${i + 1}`;
+      const tireDataFromStore = storeTireData[tirePosition];
+      
+      // READ FROM STORE - if no data, show as disconnected
       tires.push({
         id: i + 1,
-        pressure: 30 + Math.random() * 5, // Random pressure between 74-79
-        temperature: 68 + Math.random() * 10, // Random temperature between 68-78
-        connected: true,
+        pressure: tireDataFromStore?.psi ?? 0, // 0 means no data
+        temperature: tireDataFromStore ? celsiusToFahrenheit(tireDataFromStore.temp) : 0, // Convert C to F
+        connected: !!tireDataFromStore,
         deviceId: `device_${i + 1}`,
-        position: `tire_${i + 1}`,
+        position: tirePosition,
       });
     }
     
@@ -129,53 +77,38 @@ const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire
     { id: 3, pressure: 48, temperature: 76, connected: true, deviceId: '1234567890', position: 'rear-left' },
     { id: 4, pressure: 30, temperature: 77, connected: true, deviceId: '1234567890', position: 'rear-right' },
   ]);
-  // Use vehicles from store if available, otherwise fallback to prop or preset data
   const vehicles = state.vehiclesData.length > 0 ? state.vehiclesData : (propVehiclesData || []);
   const [selectedTire, setSelectedTire] = useState<string | null>(focusedTire || null);
   const [selectedVehicle, setSelectedVehicleLocal] = useState<string | null>(null);
 
-  // Set first vehicle (Power Unit) as selected by default
   useEffect(() => {
     if (vehicles.length > 0 && !selectedVehicle) {
       const firstVehicle = vehicles[0];
       setSelectedVehicleLocal(firstVehicle.id);
       setSelectedVehicle(firstVehicle.id);
-      
-      // Generate tires for the first vehicle
+    
       const newTires = generateTiresForVehicle(firstVehicle);
       setTires(newTires);
-      console.log(`✅ Auto-selected first vehicle: ${firstVehicle.name} with ${newTires.length} tires`);
+      console.log(`Auto-selected first vehicle: ${firstVehicle.name} with ${newTires.length} tires`);
     }
   }, [vehicles]);
 
   useEffect(() => {
-    // Set the selected tire when component mounts or focusedTire changes
     if (focusedTire) {
       setSelectedTire(focusedTire);
     }
   }, [focusedTire]);
 
+  // Update tires from store when tireData changes
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTires((prev) => {
-        return prev.map((tire) => {
-          if (!tire.connected) {
-            const updatedTirePressure = Math.random() * (40 - 25) + 25;
-            const updatedTireTemperature = Math.random() * (100 - 90) + 90;
-            return {
-              ...tire,
-              pressure: parseFloat((tire.pressure + updatedTirePressure).toFixed(1)),
-              temperature: parseFloat((tire.temperature + updatedTireTemperature).toFixed(1)),
-              connected: true,
-            }
-          }
-          return tire;
-        });
-      });
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, []);
+    if (selectedVehicle) {
+      const vehicle = vehicles.find(v => v.id === selectedVehicle);
+      if (vehicle) {
+        const updatedTires = generateTiresForVehicle(vehicle);
+        setTires(updatedTires);
+      }
+    }
+  }, [selectedVehicle, state.vehiclesData]);
 
   const getTireDisplayName = (tireId: string) => {
     const tireNames: { [key: string]: string } = {
@@ -191,10 +124,8 @@ const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire
     console.log('DetailedStatusScreen - Vehicle selected:', vehicleId);
     setSelectedVehicleLocal(vehicleId);
     
-    // Save selected vehicle to global store
     setSelectedVehicle(vehicleId);
     
-    // Find the selected vehicle and generate tires based on its axle type
     const selectedVehicleData = vehicles.find(v => v.id === vehicleId);
     if (selectedVehicleData) {
       const newTires = generateTiresForVehicle(selectedVehicleData);
@@ -234,86 +165,8 @@ const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire
             );
           })}
           
-          {/* Add Towable Button */}
-          <TouchableOpacity
-            style={styles.addTowableButton}
-            onPress={() => setShowAddTowableModal(true)}
-            activeOpacity={0.7}
-          >
-            <Icon name="add" size={32} color="#007AFF" />
-            <Text style={styles.addTowableButtonText}>Add Towable</Text>
-          </TouchableOpacity>
         </ScrollView>
       </View>
-
-      {/* Add Towable Modal */}
-      <Modal
-        visible={showAddTowableModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowAddTowableModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Towable</Text>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setShowAddTowableModal(false)}
-              >
-                <Icon name="close" size={24} color="#6c757d" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalBody}>
-              <TextBox
-                placeholder="Towable Name"
-                value={newTowable.name}
-                onChangeText={(value: string) =>
-                  setNewTowable((prev) => ({ ...prev, name: value }))
-                }
-                icon="car-outline"
-              />
-
-              <Dropdown
-                options={towablesTypeOptions}
-                selectedValue={newTowable.type}
-                onSelect={(value: string) =>
-                  setNewTowable((prev) => ({ ...prev, type: value, axle: "" }))
-                }
-                placeholder="Select Towable Type *"
-                icon="car-outline"
-              />
-
-              <Dropdown
-                options={getAxleOptions(newTowable.type)}
-                selectedValue={newTowable.axle}
-                onSelect={(value: string) =>
-                  setNewTowable((prev) => ({ ...prev, axle: value }))
-                }
-                placeholder="Select Axle Type *"
-                disabled={!newTowable.type}
-                icon="time-outline"
-              />
-            </ScrollView>
-
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setShowAddTowableModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleAddTowable}
-              >
-                <Text style={styles.addButtonText}>Add Towable</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       <View style={styles.content}>
         <Text style={styles.sectionTitle}>

@@ -20,7 +20,7 @@ import TireDetailScreen from "./src/screens/TireDetailScreen";
 import ForgotPasswordScreen from "./src/screens/ForgotPasswordScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import Navbar from "./src/components/Common/Navbar";
-import DevicesScreen from "./src/screens/DevicesScreen";
+import VehiclesScreen from "./src/screens/VehiclesScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import CarPlayScreen from "./src/screens/CarPlayScreen";
 import { AppProvider, useAppStore, useAppActions } from "./src/store/AppStore";
@@ -46,7 +46,7 @@ const AppContent: FC = () => {
   const [tireDetailData, setTireDetailData] = useState<{tireId: string, vehicleName: string} | null>(null);
 
   useEffect(() => {
-    console.log('✅ App initialized - checking for user data');
+    console.log('App initialized - checking for user data');
     if (state.vehiclesData.length === 0) {
       console.log('No user data found, loading default vehicles');
       setVehiclesData(vehiclesData as any[]);
@@ -57,7 +57,7 @@ const AppContent: FC = () => {
 
   const handleLogout = () => {
     clearAllData();
-    console.log('✅ Store cleared on logout');
+    console.log('Store cleared on logout');
     
     setIsAuthenticated(false);
     setUser(null);
@@ -67,13 +67,13 @@ const AppContent: FC = () => {
   };
 
   const handleTireNavigation = (tireId: string, vehicleName: string) => {
-    console.log(`🔥 App.tsx - Tire navigation: ${tireId} on ${vehicleName}`);
+    console.log(`Tire navigation: ${tireId} on ${vehicleName}`);
     setFocusedTire({ tireId, vehicleName });
     setCurrentScreen('detailed');
   };
 
   const handleTireDetailNavigation = (tireId: string, vehicleName: string) => {
-    console.log(`🔥 App.tsx - Tire detail navigation: ${tireId} on ${vehicleName}`);
+    console.log(`App.tsx - Tire detail navigation: ${tireId} on ${vehicleName}`);
     setTireDetailData({ tireId, vehicleName });
     setCurrentScreen('tire-detail');
   };
@@ -189,7 +189,7 @@ const AppContent: FC = () => {
           />
         );
       case 'devices':
-        return <DevicesScreen />;
+        return <VehiclesScreen />;
       case 'settings':
         return <SettingsScreen onLogout={handleLogout} />;
       default:

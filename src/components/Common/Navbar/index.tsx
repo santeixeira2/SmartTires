@@ -23,7 +23,7 @@ const Navbar = ({ currentScreen, onScreenChange }: NavbarProps) => {
         iconName = isActive ? 'bar-chart' : 'bar-chart-outline';
         break;
       case 'devices':
-        iconName = isActive ? 'bluetooth' : 'bluetooth-outline';
+        iconName = isActive ? 'car' : 'car-outline';
         break;
       case 'settings':
         iconName = isActive ? 'settings' : 'settings-outline';
@@ -42,7 +42,7 @@ const Navbar = ({ currentScreen, onScreenChange }: NavbarProps) => {
       case 'detailed':
         return 'Detailed';
       case 'devices':
-        return 'Devices';
+        return 'Vehicles';
       case 'settings':
         return 'Settings';
       default:

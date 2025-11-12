@@ -22,12 +22,33 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ frontLeft, frontRight, rearLeft
   // Use vehicles from store if available, otherwise fallback to empty array
   const vehicles = state.vehiclesData.length > 0 ? state.vehiclesData : [];
   
+  // Create a hash of tireData to force re-render when tire data changes
+  // Depend directly on state.vehiclesData to catch nested changes
+  const tireDataHash = React.useMemo(() => {
+    return JSON.stringify(
+      state.vehiclesData.map(v => ({
+        id: v.id,
+        tireData: v.tireData
+      }))
+    );
+  }, [state.vehiclesData]);
+  
   // Set first vehicle as selected if none is selected
   React.useEffect(() => {
     if (vehicles.length > 0 && !state.selectedVehicleId) {
       dispatch({ type: 'SET_SELECTED_VEHICLE', payload: vehicles[0].id });
     }
   }, [vehicles.length, state.selectedVehicleId, dispatch]);
+  
+  // Log when tire data changes
+  React.useEffect(() => {
+    console.log('HomeScreen: Tire data changed', tireDataHash);
+    vehicles.forEach(v => {
+      if (v.tireData) {
+        console.log(`Vehicle ${v.name} tire data:`, v.tireData);
+      }
+    });
+  }, [tireDataHash, vehicles]);
 
   // Auto-scroll to selected vehicle when it changes
   React.useEffect(() => {
@@ -84,9 +105,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ frontLeft, frontRight, rearLeft
         >
           {vehicles.map((vehicle) => {
             const isSelected = vehicle.id === state.selectedVehicleId;
+            // Create a key that includes tireData to force re-render when tire data changes
+            const vehicleKey = `${vehicle.id}-${JSON.stringify(vehicle.tireData || {})}`;
             return (
               <TouchableOpacity 
-                key={vehicle.id} 
+                key={vehicleKey} 
                 style={[
                   styles.vehicleCard, 
                   { width: CARD_WIDTH },
@@ -104,6 +127,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ frontLeft, frontRight, rearLeft
                 </View>
                 <View style={styles.svgContainer}>
                   <TruckTopDownView 
+                    key={`tire-view-${vehicle.id}-${JSON.stringify(vehicle.tireData || {})}`}
                     axleType={vehicle.axleType as '1 Axle' | '2 Axles' | '3 Axles' | '4 Axles' | '5 Axles' | '6 Axles'}
                     dynamicTireData={vehicle.tireData}
                     onTirePress={(tireId) => handleTirePress(tireId, vehicle.name)}
@@ -114,6 +138,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ frontLeft, frontRight, rearLeft
                       }
                       return 'towable';
                     })()}
+                    thresholds={vehicle.thresholds}
                   />
                 </View>
               </TouchableOpacity>

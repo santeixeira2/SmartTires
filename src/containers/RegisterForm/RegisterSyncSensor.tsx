@@ -7,6 +7,7 @@ import TextBox from '../../components/Common/TextBox';
 import CustomModal from '../../components/Common/Modal';
 import { CameraScanner } from '../../components/Common/QrCodeScanner';
 import TireSyncModal from '../../components/Common/TireSyncModal';
+import { VehicleThresholds } from '../../store/AppStore';
 
 interface RegisterSyncSensorProps {
   onComplete: () => void;
@@ -101,9 +102,10 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
     console.log(`✅ Sensor ${sensorId} synced to ${tireId.replace('-', ' ')} tire on ${selectedVehicle}`);
   };
 
-  const handleVehicleSyncComplete = (vehicleId: string, sensorIds: {[key: string]: string}) => {
+  const handleVehicleSyncComplete = (vehicleId: string, sensorIds: {[key: string]: string}, thresholds?: VehicleThresholds) => {
     console.log(`✅ Vehicle ${vehicleId} sync complete!`);
     console.log(`📊 Sensor IDs for ${vehicleId}:`, sensorIds);
+    console.log(`📊 Thresholds for ${vehicleId}:`, thresholds);
     
     const updatedSyncedVehicles = {
       ...syncedVehicles,
@@ -424,7 +426,7 @@ const RegisterSyncSensor: React.FC<RegisterSyncSensorProps> = ({
         visible={showTireSyncModal}
         onClose={() => setShowTireSyncModal(false)}
         onTireSync={handleTireSync}
-        onVehicleSyncComplete={(sensorIds: {[key: string]: string}) => handleVehicleSyncComplete(selectedVehicle || '', sensorIds as {[key: string]: string})}
+        onVehicleSyncComplete={(sensorIds: {[key: string]: string}, thresholds?: VehicleThresholds) => handleVehicleSyncComplete(selectedVehicle || '', sensorIds as {[key: string]: string}, thresholds)}
         vehicleName={(() => {
           if (selectedVehicle === 'main-vehicle') {
             return setupData.vehicleName || 'Main Vehicle';

@@ -257,7 +257,12 @@ const RegisterFormMultiStep: React.FC<RegisterFormMultiStepProps> = ({
       imageUrl: 'map.png',
       tireCount: 4, // Default for main vehicle
       synced: registrationData.syncStatus.allSynced,
-      tireData: generateTireDataForAxle(registrationData.vehicle.axleType)
+      tireData: generateTireDataForAxle(registrationData.vehicle.axleType),
+      thresholds: {
+        pressureLow: 28,
+        pressureWarning: 32,
+        temperatureHigh: 160,
+      }
     });
 
     // Add towables
@@ -273,7 +278,12 @@ const RegisterFormMultiStep: React.FC<RegisterFormMultiStepProps> = ({
           imageUrl: 'map.png',
           tireCount: towable.tireCount,
           synced: registrationData.syncedVehicles[towable.id] || false,
-          tireData: generateTireDataForAxle(towable.axle)
+          tireData: generateTireDataForAxle(towable.axle),
+          thresholds: {
+            pressureLow: 28,
+            pressureWarning: 32,
+            temperatureHigh: 160,
+          }
         });
       });
     }
