@@ -1,0 +1,25 @@
+services:
+  build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # No platform specified - uses native ARM64 (faster, since Android build is bypassed)
+    volumes:
+      # Mount output directory to extract APK
+      - ./output:/output
+      # Mount project directory for Metro bundler access
+      - .:/app
+      # Optional: Cache node_modules (comment out if you want fresh installs)
+      # - node_modules:/app/node_modules
+    ports:
+      # Expose Metro bundler port
+      - "8081:8081"
+    working_dir: /app
+    # Android build bypassed - build on host instead
+    # Use this container for dependency installation and environment setup only
+    # Keep container running (use 'docker-compose exec build bash' to get a shell)
+    command: tail -f /dev/null
+
+# volumes:
+#   node_modules:
+

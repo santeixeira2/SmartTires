@@ -14,7 +14,7 @@ export interface TireData {
     temperature?: number;
     isConnected?: boolean;
   }
-
+  
   export interface TruckTopDownViewProps {
     vehicleType?: 'power_unit' | 'towing_vehicles' | 'travel_trailer' | 'fifth_wheel' | 'towable';
     axleCount?: number;
