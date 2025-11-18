@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 import styles from './TruckTopDownView.style';
+import { VehicleThresholds } from '../../../store/AppStore';
 
 export interface AxleTireData {
   psi: number;
@@ -14,6 +15,7 @@ export interface AxleTopDownViewProps {
   syncedTires?: {[key: string]: string};
   vehicleType?: 'power_unit' | 'towable';
   style?: any;
+  thresholds?: VehicleThresholds;
 }
 
 const AxleTopDownView: React.FC<AxleTopDownViewProps> = ({
@@ -22,8 +24,17 @@ const AxleTopDownView: React.FC<AxleTopDownViewProps> = ({
   onTirePress,
   syncedTires,
   vehicleType = 'power_unit',
-  style
+  style,
+  thresholds
 }) => {
+  // Force re-render when tireData changes
+  const tireDataHash = React.useMemo(() => {
+    return JSON.stringify(tireData);
+  }, [tireData]);
+  
+  React.useEffect(() => {
+    console.log('AxleTopDownView: Tire data updated', tireData);
+  }, [tireDataHash]);
   
   const getVehicleImage = () => {
     if (vehicleType === 'towable') {
@@ -39,8 +50,15 @@ const AxleTopDownView: React.FC<AxleTopDownViewProps> = ({
     }
     
     if (tireData) {
-      if (tireData.psi < 28 || tireData.temp > 160) return "red";
-      if (tireData.psi < 32) return "orange"; 
+      // Use stored thresholds or fallback to defaults
+      const pressureLow = thresholds?.pressureLow ?? 28;
+      const pressureWarning = thresholds?.pressureWarning ?? 32;
+      const temperatureHigh = thresholds?.temperatureHigh ?? 160;
+      
+      // tireData.temp is in Celsius, convert to Fahrenheit for comparison
+      const tempF = (tireData.temp * 9/5) + 32;
+      if (tireData.psi < pressureLow || tempF > temperatureHigh) return "red";
+      if (tireData.psi < pressureWarning) return "orange"; 
       return "green";
     }
     

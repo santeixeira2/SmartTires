@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { celsiusToFahrenheit } from '../../utils/tireData';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import Header from '../../components/Common/Header';
 import TireCard, { TireData } from '../../components/Vehicle/TireCard';
 import VehicleCard, { VehicleData } from '../../components/Vehicle/VehicleCard';
@@ -16,28 +17,54 @@ interface DetailedStatusScreenProps {
 const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire, vehicleName, vehiclesData: propVehiclesData, onNavigateToTireDetail }) => {
   const { state } = useAppStore();
   const { setSelectedVehicle } = useAppActions();
+
   const getTireCountFromAxle = (axleType: string): number => {
     const axleMap: {[key: string]: number} = {
       '1 Axle': 2,
       '2 Axles': 4,
+      '2 Axles w/Dually': 6,
+      '2 Axles w/Dually Tires': 6,
       '3 Axles': 6,
+      '4 Axles': 8,
+      '5 Axles': 10,
+      '6 Axles': 12,
     };
     return axleMap[axleType] || 4; // Default to 4 if not found
   };
 
-  // Generate tires based on selected vehicle's axle type
-  const generateTiresForVehicle = (vehicle: VehicleData): TireData[] => {
+
+  // Generate tires based on selected vehicle's axle type - READ FROM STORE
+  const generateTiresForVehicle = (vehicle: VehicleData | any): TireData[] => {
     const tireCount = getTireCountFromAxle(vehicle.axleType);
     const tires: TireData[] = [];
     
+    // Get tire data from store (vehicle may have tireData from store)
+    const storeTireData = (vehicle as any).tireData || {};
+    
+    // Map tire positions based on axle type
+    const tirePositions: string[] = [];
+    if (tireCount === 2) {
+      tirePositions.push('left', 'right');
+    } else if (tireCount === 4) {
+      tirePositions.push('front-left', 'front-right', 'rear-left', 'rear-right');
+    } else if (tireCount === 6 && vehicle.axleType === '2 Axles w/Dually') {
+      tirePositions.push('front-left', 'front-right', 'rear-left-inner', 'rear-left-outer', 'rear-right-inner', 'rear-right-outer');
+    } else if (tireCount === 6) {
+      tirePositions.push('front-left', 'front-right', 'middle-left', 'middle-right', 'rear-left', 'rear-right');
+    }
+    
     for (let i = 0; i < tireCount; i++) {
+      const tirePosition = tirePositions[i] || `tire-${i + 1}`;
+      const tireDataFromStore = storeTireData[tirePosition];
+      
+      // READ FROM STORE - if no data, show as disconnected
       tires.push({
         id: i + 1,
-        pressure: 30 + Math.random() * 5, // Random pressure between 74-79
-        temperature: 68 + Math.random() * 10, // Random temperature between 68-78
-        connected: true,
+        pressure: tireDataFromStore?.psi ?? 0, // 0 means no data
+        temperature: tireDataFromStore ? celsiusToFahrenheit(tireDataFromStore.temp) : 0, // Convert C to F
+        connected: !!tireDataFromStore,
         deviceId: `device_${i + 1}`,
-        position: `tire_${i + 1}`,
+        position: tirePosition,
       });
     }
     
@@ -50,53 +77,38 @@ const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire
     { id: 3, pressure: 48, temperature: 76, connected: true, deviceId: '1234567890', position: 'rear-left' },
     { id: 4, pressure: 30, temperature: 77, connected: true, deviceId: '1234567890', position: 'rear-right' },
   ]);
-  // Use vehicles from store if available, otherwise fallback to prop or preset data
   const vehicles = state.vehiclesData.length > 0 ? state.vehiclesData : (propVehiclesData || []);
   const [selectedTire, setSelectedTire] = useState<string | null>(focusedTire || null);
   const [selectedVehicle, setSelectedVehicleLocal] = useState<string | null>(null);
 
-  // Set first vehicle (Power Unit) as selected by default
   useEffect(() => {
     if (vehicles.length > 0 && !selectedVehicle) {
       const firstVehicle = vehicles[0];
       setSelectedVehicleLocal(firstVehicle.id);
       setSelectedVehicle(firstVehicle.id);
-      
-      // Generate tires for the first vehicle
+    
       const newTires = generateTiresForVehicle(firstVehicle);
       setTires(newTires);
-      console.log(`✅ Auto-selected first vehicle: ${firstVehicle.name} with ${newTires.length} tires`);
+      console.log(`Auto-selected first vehicle: ${firstVehicle.name} with ${newTires.length} tires`);
     }
   }, [vehicles]);
 
   useEffect(() => {
-    // Set the selected tire when component mounts or focusedTire changes
     if (focusedTire) {
       setSelectedTire(focusedTire);
     }
   }, [focusedTire]);
 
+  // Update tires from store when tireData changes
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTires((prev) => {
-        return prev.map((tire) => {
-          if (!tire.connected) {
-            const updatedTirePressure = Math.random() * (40 - 25) + 25;
-            const updatedTireTemperature = Math.random() * (100 - 90) + 90;
-            return {
-              ...tire,
-              pressure: parseFloat((tire.pressure + updatedTirePressure).toFixed(1)),
-              temperature: parseFloat((tire.temperature + updatedTireTemperature).toFixed(1)),
-              connected: true,
-            }
-          }
-          return tire;
-        });
-      });
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, []);
+    if (selectedVehicle) {
+      const vehicle = vehicles.find(v => v.id === selectedVehicle);
+      if (vehicle) {
+        const updatedTires = generateTiresForVehicle(vehicle);
+        setTires(updatedTires);
+      }
+    }
+  }, [selectedVehicle, state.vehiclesData]);
 
   const getTireDisplayName = (tireId: string) => {
     const tireNames: { [key: string]: string } = {
@@ -112,10 +124,8 @@ const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire
     console.log('DetailedStatusScreen - Vehicle selected:', vehicleId);
     setSelectedVehicleLocal(vehicleId);
     
-    // Save selected vehicle to global store
     setSelectedVehicle(vehicleId);
     
-    // Find the selected vehicle and generate tires based on its axle type
     const selectedVehicleData = vehicles.find(v => v.id === vehicleId);
     if (selectedVehicleData) {
       const newTires = generateTiresForVehicle(selectedVehicleData);
@@ -154,6 +164,7 @@ const DetailedStatusScreen: React.FC<DetailedStatusScreenProps> = ({ focusedTire
               />
             );
           })}
+          
         </ScrollView>
       </View>
 

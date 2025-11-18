@@ -34,6 +34,12 @@ export interface RegistrationData {
   };
 }
 
+export interface VehicleThresholds {
+  pressureLow: number;      // PSI threshold for low pressure warning
+  pressureWarning: number;  // PSI threshold for warning (orange)
+  temperatureHigh: number;   // Temperature in Fahrenheit for high temp warning
+}
+
 export interface AppState {
   registrationData: RegistrationData | null;
   isDemoUser: boolean;
@@ -53,7 +59,9 @@ type AppAction =
   | { type: 'CLEAR_ALL_DATA' }
   | { type: 'UPDATE_SYNCED_VEHICLES'; payload: {[key: string]: boolean} }
   | { type: 'SET_DARK_MODE'; payload: boolean }
-  | { type: 'SET_UNITS'; payload: 'imperial' | 'metric' };
+  | { type: 'SET_UNITS'; payload: 'imperial' | 'metric' }
+  | { type: 'UPDATE_VEHICLE_TIRE_DATA'; payload: { vehicleId: string; tireData: any } }
+  | { type: 'UPDATE_VEHICLE_THRESHOLDS'; payload: { vehicleId: string; thresholds: VehicleThresholds } };
 
 const initialState: AppState = {
   registrationData: null,
@@ -119,6 +127,42 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
         ...state,
         units: action.payload,
       };
+    case 'UPDATE_VEHICLE_TIRE_DATA':
+      console.log('Store: UPDATE_VEHICLE_TIRE_DATA action received');
+      console.log('Store: Vehicle ID:', action.payload.vehicleId);
+      console.log('Store: Tire data to merge:', action.payload.tireData);
+      const updatedState = {
+        ...state,
+        vehiclesData: state.vehiclesData.map(vehicle => {
+          if (vehicle.id === action.payload.vehicleId) {
+            const updatedVehicle = {
+              ...vehicle,
+              tireData: {
+                ...(vehicle.tireData || {}), // Preserve existing tire data
+                ...action.payload.tireData  // Merge in new tire data
+              }
+            };
+            console.log(`Store: Updated vehicle ${vehicle.id} tire data:`, updatedVehicle.tireData);
+            return updatedVehicle;
+          }
+          return vehicle;
+        }),
+      };
+      console.log('Store: State updated with new tire data');
+      return updatedState;
+    case 'UPDATE_VEHICLE_THRESHOLDS':
+      return {
+        ...state,
+        vehiclesData: state.vehiclesData.map(vehicle => {
+          if (vehicle.id === action.payload.vehicleId) {
+            return {
+              ...vehicle,
+              thresholds: action.payload.thresholds
+            };
+          }
+          return vehicle;
+        }),
+      };
     default:
       return state;
   }
@@ -181,6 +225,10 @@ export const useAppActions = () => {
     dispatch({ type: 'UPDATE_SYNCED_VEHICLES', payload: syncedVehicles });
   }, [dispatch]);
 
+  const updateVehicleThresholds = useCallback((vehicleId: string, thresholds: VehicleThresholds) => {
+    dispatch({ type: 'UPDATE_VEHICLE_THRESHOLDS', payload: { vehicleId, thresholds } });
+  }, [dispatch]);
+
   return {
     setRegistrationData,
     setDemoUser,
@@ -189,5 +237,6 @@ export const useAppActions = () => {
     setLoading,
     clearAllData,
     updateSyncedVehicles,
+    updateVehicleThresholds,
   };
 };

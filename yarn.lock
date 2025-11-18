@@ -5767,6 +5767,11 @@ react-is@^19.1.0:
   resolved "https://registry.npmjs.org/react-is/-/react-is-19.2.0.tgz"
   integrity sha512-x3Ax3kNSMIIkyVYhWPyO09bu0uttcAIoecO/um/rKGQ4EltYWVYtyiGkS/3xMynrbVQdS69Jhlv8FXUEZehlzA==
 
+react-native-ble-manager@^12.2.2:
+  version "12.2.2"
+  resolved "https://registry.npmjs.org/react-native-ble-manager/-/react-native-ble-manager-12.2.2.tgz"
+  integrity sha512-Jndbp+QIGdOk+xxOMciQRCTYV/af/tkEH/67f8aaaij9M6qMAyeOQEGHy4GlXADg9GLWdL/NZcPdiaDep/SMkQ==
+
 react-native-carplay@^2.4.1-beta.0:
   version "2.4.1-beta.0"
   resolved "https://registry.npmjs.org/react-native-carplay/-/react-native-carplay-2.4.1-beta.0.tgz"
@@ -5779,10 +5784,10 @@ react-native-maps@^1.24.13:
   dependencies:
     "@types/geojson" "^7946.0.13"
 
-react-native-permissions@^5.4.2:
-  version "5.4.2"
-  resolved "https://registry.npmjs.org/react-native-permissions/-/react-native-permissions-5.4.2.tgz"
-  integrity sha512-XNMoG1fxrB9q73MLn/ZfTaP7pS8qPu0KWypbeFKVTvoR+JJ3O7uedMOTH/mts9bTG+GKhShOoZ+k0CR63q9jwA==
+react-native-permissions@^5.4.4:
+  version "5.4.4"
+  resolved "https://registry.npmjs.org/react-native-permissions/-/react-native-permissions-5.4.4.tgz"
+  integrity sha512-WB5lRCBGXETfuaUhem2vgOceb9+URCeyfKpLGFSwoOffLuyJCA6+NTR3l1KLkrK4Ykxsig37z16/shUVufmt7A==
 
 react-native-safe-area-context@^5.6.1:
   version "5.6.1"

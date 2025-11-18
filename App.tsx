@@ -2,7 +2,6 @@ import { FC, useEffect, useState } from "react";
 import { NewAppScreen } from "@react-native/new-app-screen";
 import { SafeAreaView, StatusBar, StyleSheet, useColorScheme, View, LogBox } from "react-native";
 
-// Disable React Native warnings that cause yellow overlay
 LogBox.ignoreAllLogs(true);
 LogBox.ignoreLogs([
   'Warning:',
@@ -21,7 +20,7 @@ import TireDetailScreen from "./src/screens/TireDetailScreen";
 import ForgotPasswordScreen from "./src/screens/ForgotPasswordScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import Navbar from "./src/components/Common/Navbar";
-import DevicesScreen from "./src/screens/DevicesScreen";
+import VehiclesScreen from "./src/screens/VehiclesScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import CarPlayScreen from "./src/screens/CarPlayScreen";
 import { AppProvider, useAppStore, useAppActions } from "./src/store/AppStore";
@@ -46,9 +45,8 @@ const AppContent: FC = () => {
   const [focusedTire, setFocusedTire] = useState<{tireId: string, vehicleName: string} | null>(null);
   const [tireDetailData, setTireDetailData] = useState<{tireId: string, vehicleName: string} | null>(null);
 
-  // Initialize app with default vehicles data only if no user data exists
   useEffect(() => {
-    console.log('✅ App initialized - checking for user data');
+    console.log('App initialized - checking for user data');
     if (state.vehiclesData.length === 0) {
       console.log('No user data found, loading default vehicles');
       setVehiclesData(vehiclesData as any[]);
@@ -57,11 +55,9 @@ const AppContent: FC = () => {
     }
   }, [state.vehiclesData.length]); // Only run when vehiclesData changes
 
-  // Handle logout
   const handleLogout = () => {
-    // Clear all data from store
     clearAllData();
-    console.log('✅ Store cleared on logout');
+    console.log('Store cleared on logout');
     
     setIsAuthenticated(false);
     setUser(null);
@@ -70,37 +66,29 @@ const AppContent: FC = () => {
     setFocusedTire(null);
   };
 
-  // Handle tire navigation
   const handleTireNavigation = (tireId: string, vehicleName: string) => {
-    console.log(`🔥 App.tsx - Tire navigation: ${tireId} on ${vehicleName}`);
+    console.log(`Tire navigation: ${tireId} on ${vehicleName}`);
     setFocusedTire({ tireId, vehicleName });
     setCurrentScreen('detailed');
   };
 
-  // Handle tire detail navigation
   const handleTireDetailNavigation = (tireId: string, vehicleName: string) => {
-    console.log(`🔥 App.tsx - Tire detail navigation: ${tireId} on ${vehicleName}`);
+    console.log(`App.tsx - Tire detail navigation: ${tireId} on ${vehicleName}`);
     setTireDetailData({ tireId, vehicleName });
     setCurrentScreen('tire-detail');
   };
 
-  // Handle back from tire detail
   const handleBackFromTireDetail = () => {
     setCurrentScreen('detailed');
     setTireDetailData(null);
   };
 
-  // Initialize CarPlay screen
   useEffect(() => {
-    // CarPlay functionality is now handled in CarPlayScreen component
     return () => {
-      // Cleanup if needed
     };
   }, []);
 
   console.log('App.tsx - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading, 'user:', user);
-
-  // Show loading screen while checking authentication
   if (isLoading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
@@ -201,7 +189,7 @@ const AppContent: FC = () => {
           />
         );
       case 'devices':
-        return <DevicesScreen />;
+        return <VehiclesScreen />;
       case 'settings':
         return <SettingsScreen onLogout={handleLogout} />;
       default:
@@ -216,16 +204,10 @@ const AppContent: FC = () => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-
-      {/* CarPlay Screen - Always active */}
       <CarPlayScreen />
-
-      {/* Main Content */}
       <View style={{ flex: 1 }}>
         {renderScreen()}
       </View>
-
-      {/* Custom Navbar */}
       <Navbar currentScreen={currentScreen as any} onScreenChange={setCurrentScreen as any} />
     </SafeAreaView>
   );

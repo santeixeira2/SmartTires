@@ -110,5 +110,9 @@
 		<string>SimpleLineIcons.ttf</string>
 		<string>Zocial.ttf</string>
 	</array>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>We need Bluetooth access to connect to tire pressure sensors</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>We need Bluetooth access to connect to tire pressure sensors</string>
 </dict>
 </plist>
